@@ -5,6 +5,16 @@ import requests
 
 
 def download_webpage(webpage_url: str, webpage_enc: str, timeout_sec=10) -> str:
+    """出動情報が掲載されているWebページの情報を取得する
+
+    Args:
+        webpage_url (str): WebページのURL
+        webpage_enc (str): Webページのエンコーディング
+        timeout_sec (int, optional): Webページのダウンロードタイムアウト（秒）. Defaults to 10.
+
+    Returns:
+        str: 取得したWebページのテキスト
+    """
     try:
         # loggerを取得
         logger = getLogger("requests")
