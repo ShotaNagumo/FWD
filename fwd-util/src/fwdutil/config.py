@@ -20,7 +20,6 @@ def get_variable_dir() -> Path:
     global SETTING_DATA
     if SETTING_DATA is None:
         SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text())
-        print("READ YAML")
 
     # 読み出したデータをPathに変換する
     return Path(SETTING_DATA["variable_dir"])
