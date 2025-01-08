@@ -1,5 +1,5 @@
 import datetime
-from enum import Enum
+from enum import Enum, auto
 
 import sqlalchemy
 from fwdutil import database_manager
@@ -32,9 +32,22 @@ class TextPosition(Enum):
 
 
 class NotifyStatus(Enum):
-    SKIPPED = 0
-    NOT_YET = 1
-    NOTIFIED = 2
+
+
+class DisasterMainCategory(Enum):
+    火災 = auto()
+    救助 = auto()
+    警戒 = auto()
+    救急支援 = auto()
+
+
+class DisasterStatus(Enum):
+    発生 = auto()
+    終了 = auto()
+    救助終了 = auto()
+    消火不要 = auto()
+    鎮圧 = auto()
+    鎮火 = auto()
 
 
 class NagaokaRawText(Base):
@@ -51,8 +64,33 @@ class NagaokaRawText(Base):
 
 class NagaokaDisasterDetail(Base):
     __tablename__ = "nagaoka_disaster_detail"
+
+    """ "nagaoka_raw_text"テーブルのID
+    """
     raw_text_id = Column(
         Integer, ForeignKey("nagaoka_raw_text.id", ondelete="CASCADE"), primary_key=True
     )
+    """災害種別
+    """
+    main_category = Column(sqlalchemy.Enum(DisasterMainCategory), nullable=False)
+    """災害種別詳細
+    """
+    sub_category = Column(String, nullable=True)
+    """災害発生時刻
+    """
     open_dt = Column(DateTime, nullable=False)
+    """災害終了時刻
+    """
     close_dt = Column(DateTime, nullable=True)
+    """災害状態
+    """
+    status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
+    """住所1（長岡市以外の場合の都市名）
+    """
+    address1 = Column(String, nullable=True)
+    """住所2（町名、道路名）
+    """
+    address2 = Column(String, nullable=False)
+    """住所3（丁目、道路方向）
+    """
+    address3 = Column(String, nullable=True)
