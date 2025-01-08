@@ -27,11 +27,14 @@ class DatabaseInfo(Base):
 
 
 class TextPosition(Enum):
-    CURR = 1
-    PAST = 2
+    CURR = auto()
+    PAST = auto()
 
 
 class NotifyStatus(Enum):
+    SKIPPED = auto()
+    NOT_YET = auto()
+    NOTIFIED = auto()
 
 
 class DisasterMainCategory(Enum):
