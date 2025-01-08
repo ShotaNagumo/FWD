@@ -6,6 +6,8 @@ from typing import Final
 
 import sqlalchemy
 from datamodel import (
+    DisasterMainCategory,
+    DisasterStatus,
     NagaokaDisasterDetail,
     NagaokaRawText,
     TextPosition,
@@ -84,7 +86,7 @@ class FwdWNagaoka:
                 session.add(raw_text_data)
         session.commit()
 
-    def _analyze_disaster_text(self):
+    def _analyze_disaster_text(self, alt_year=None):
         session: Session = database_manager.SESSION()
 
         # 分析対象のNagaokaRawText一覧をDBから取得する
@@ -97,13 +99,34 @@ class FwdWNagaoka:
         # 分析処理を実行する
         self._logger.info(f"Not Analyzed: {len(not_analyzed_list)}")
         for raw_text_data in not_analyzed_list:
-            # 分析結果をもとに詳細情報データを作成する
-            # TODO: 以下の実装は仮
-            detail_data = NagaokaDisasterDetail(
-                raw_text_id=raw_text_data.id,
-                open_dt=datetime.datetime.now(),
-                close_dt=datetime.datetime.now(),
+            detail_data = NagaokaDisasterDetail()
+            # 一回目の解析（発生時刻、都市名を解析する）
+            m = re.match(
+                r"(\d{2})月(\d{2})日 (\d{2}):(\d{2}) (\S+?) (.+)。$",
+                raw_text_data.raw_text,
             )
+
+            # 災害発生時刻を決定する
+            _year = alt_year if alt_year else datetime.datetime.now().year
+            detail_data.open_dt = datetime.datetime(
+                year=_year,
+                month=int(m.group(1)),
+                day=int(m.group(2)),
+                hour=int(m.group(3)),
+                minute=int(m.group(4)),
+            )
+
+            # 都市名を決定する
+            if m.group(5) != "長岡市":
+                detail_data.address1 = m.group(5)
+
+            # TODO: 以下の実装は仮
+            detail_data.raw_text_id = raw_text_data.id
+            detail_data.main_category = DisasterMainCategory.火災
+            detail_data.sub_category = "建物火災"
+            detail_data.status = DisasterStatus.発生
+            detail_data.address2 = "○○"
+            detail_data.address3 = "N丁目"
 
             # 解析結果をコミットする
             session.add(detail_data)
