@@ -99,38 +99,49 @@ class FwdWNagaoka:
         # 分析処理を実行する
         self._logger.info(f"Not Analyzed: {len(not_analyzed_list)}")
         for raw_text_data in not_analyzed_list:
-            detail_data = NagaokaDisasterDetail()
-            # 一回目の解析（発生時刻、都市名を解析する）
-            m = re.match(
-                r"(\d{2})月(\d{2})日 (\d{2}):(\d{2}) (\S+?) (.+)。$",
-                raw_text_data.raw_text,
+            detail_data = self._analyzelogic(
+                raw_text_data.raw_text, raw_text_data.id, alt_year
             )
-
-            # 災害発生時刻を決定する
-            _year = alt_year if alt_year else datetime.datetime.now().year
-            detail_data.open_dt = datetime.datetime(
-                year=_year,
-                month=int(m.group(1)),
-                day=int(m.group(2)),
-                hour=int(m.group(3)),
-                minute=int(m.group(4)),
-            )
-
-            # 都市名を決定する
-            if m.group(5) != "長岡市":
-                detail_data.address1 = m.group(5)
-
-            # TODO: 以下の実装は仮
-            detail_data.raw_text_id = raw_text_data.id
-            detail_data.main_category = DisasterMainCategory.火災
-            detail_data.sub_category = "建物火災"
-            detail_data.status = DisasterStatus.発生
-            detail_data.address2 = "○○"
-            detail_data.address3 = "N丁目"
 
             # 解析結果をコミットする
             session.add(detail_data)
             session.commit()
+
+    def _analyzelogic(
+        self, disaster_text: str, raw_text_id: int, alt_year=None
+    ) -> NagaokaDisasterDetail:
+        detail_data = NagaokaDisasterDetail()
+        # 一回目の解析（発生時刻、都市名を解析する）
+        m = re.match(
+            r"(?P<month>\d{2})月(?P<day>\d{2})日 (?P<hour>\d{2}):(?P<minute>\d{2}) (?P<city>\S+?) (?P<next>.+)。$",
+            disaster_text,
+        )
+
+        # 災害発生時刻の年を決定する
+        # TODO: 年末を考慮した処理の実装
+        open_year = alt_year if alt_year else datetime.datetime.now().year
+
+        # 災害発生時刻を決定する
+        detail_data.open_dt = datetime.datetime(
+            year=open_year,
+            month=int(m.group("month")),
+            day=int(m.group("day")),
+            hour=int(m.group("hour")),
+            minute=int(m.group("minute")),
+        )
+
+        # 都市名を決定する
+        detail_data.address1 = m.group("city") if m.group("city") != "長岡市" else None
+
+        # TODO: 以下の実装は仮（NotNull制約を満たすため）
+        detail_data.raw_text_id = raw_text_id
+        detail_data.main_category = DisasterMainCategory.火災
+        detail_data.sub_category = "建物火災"
+        detail_data.status = DisasterStatus.発生
+        detail_data.address2 = "○○"
+        detail_data.address3 = "N丁目"
+
+        return detail_data
 
 
 if __name__ == "__main__":
