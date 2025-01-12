@@ -110,9 +110,14 @@ class FwdWNagaoka:
     def _analyzelogic(
         self, disaster_text: str, raw_text_id: int, alt_year=None
     ) -> NagaokaDisasterDetail:
+        # 解析結果を格納するインスタンス生成
         detail_data = NagaokaDisasterDetail()
+
+        # raw_text_idを設定する
+        detail_data.raw_text_id = raw_text_id
+
         # 一回目の解析（発生時刻、都市名を解析する）
-        m = re.match(
+        m_1st = re.match(
             r"(?P<month>\d{2})月(?P<day>\d{2})日 (?P<hour>\d{2}):(?P<minute>\d{2}) (?P<city>\S+?) (?P<next>.+)。$",
             disaster_text,
         )
@@ -124,22 +129,68 @@ class FwdWNagaoka:
         # 災害発生時刻を決定する
         detail_data.open_dt = datetime.datetime(
             year=open_year,
-            month=int(m.group("month")),
-            day=int(m.group("day")),
-            hour=int(m.group("hour")),
-            minute=int(m.group("minute")),
+            month=int(m_1st.group("month")),
+            day=int(m_1st.group("day")),
+            hour=int(m_1st.group("hour")),
+            minute=int(m_1st.group("minute")),
         )
 
         # 都市名を決定する
-        detail_data.address1 = m.group("city") if m.group("city") != "長岡市" else None
+        # "長岡市"以外の場合はその都市名を設定し、"長岡市"の場合はNoneを設定
+        detail_data.address1 = (
+            m_1st.group("city") if m_1st.group("city") != "長岡市" else None
+        )
+
+        # 二回目の解析（災害種別、住所、状態を解析する）
+        m_2nd = re.match(
+            r"(?P<address>.+?)(に|の)(?P<category>.+?)(は|のため)(?P<status>.+)$",
+            m_1st.group("next"),
+        )
+        # self._logger.info(f'{m_1st.group("next")=}')
+        # self._logger.info(
+        #     f'{m_1st.group("next")=}, {m_2nd.group("address")=}, {m_2nd.group("category")=}, {m_2nd.group("status")=}'
+        # )
+
+        # 災害種別を決定する
+        category_str = m_2nd.group("category")
+        if re.search(r"火災", category_str):
+            detail_data.main_category = DisasterMainCategory.火災
+        elif re.search(r"救助", category_str):
+            detail_data.main_category = DisasterMainCategory.救助
+        elif re.search(r"警戒", category_str):
+            detail_data.main_category = DisasterMainCategory.警戒
+        elif re.search(r"救急", category_str):
+            detail_data.main_category = DisasterMainCategory.救急支援
+        else:
+            detail_data.main_category = DisasterMainCategory.その他
+
+        # 災害種別詳細を設定する
+        detail_data.sub_category = category_str
+
+        # 住所を決定する
+        # TODO: より詳細な住所解析
+        detail_data.address2 = m_2nd.group("address")
+
+        # 状態を決定する
+        # TODO: 終了時の判定
+        # TODO: close_dtに設定する時刻の解析（鎮圧、鎮火、救助終了）
+        status_str = m_2nd.group("status")
+        if re.search(r"消防車が出動しました", status_str):
+            detail_data.status = DisasterStatus.発生
+        elif re.search(r"救助終了しました", status_str):
+            detail_data.status = DisasterStatus.救助終了
+        elif re.search(r"消火の必要はありませんでした", status_str):
+            detail_data.status = DisasterStatus.消火不要
+        elif re.search(r"鎮圧しました", status_str):
+            detail_data.status = DisasterStatus.鎮圧
+        elif re.search(r"鎮火しました", status_str):
+            detail_data.status = DisasterStatus.鎮火
+        else:
+            detail_data.status = DisasterStatus.終了
 
         # TODO: 以下の実装は仮（NotNull制約を満たすため）
-        detail_data.raw_text_id = raw_text_id
-        detail_data.main_category = DisasterMainCategory.火災
-        detail_data.sub_category = "建物火災"
-        detail_data.status = DisasterStatus.発生
-        detail_data.address2 = "○○"
-        detail_data.address3 = "N丁目"
+        # detail_data.address2 = "○○"
+        # detail_data.address3 = "N丁目"
 
         return detail_data
 

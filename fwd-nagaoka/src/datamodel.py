@@ -42,15 +42,16 @@ class DisasterMainCategory(Enum):
     救助 = auto()
     警戒 = auto()
     救急支援 = auto()
+    その他 = auto()
 
 
 class DisasterStatus(Enum):
     発生 = auto()
-    終了 = auto()
     救助終了 = auto()
     消火不要 = auto()
     鎮圧 = auto()
     鎮火 = auto()
+    終了 = auto()
 
 
 class NagaokaRawText(Base):
