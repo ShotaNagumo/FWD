@@ -2,7 +2,7 @@ import datetime
 import logging
 import re
 from pathlib import Path
-from typing import Final
+from typing import Final, Optional
 
 import sqlalchemy
 from datamodel import (
@@ -86,7 +86,7 @@ class FwdWNagaoka:
                 session.add(raw_text_data)
         session.commit()
 
-    def _analyze_disaster_text(self, alt_year=None):
+    def _analyze_disaster_text(self, analyze_dt=datetime.datetime.now()):
         session: Session = database_manager.SESSION()
 
         # 分析対象のNagaokaRawText一覧をDBから取得する
@@ -100,7 +100,7 @@ class FwdWNagaoka:
         self._logger.info(f"Not Analyzed: {len(not_analyzed_list)}")
         for raw_text_data in not_analyzed_list:
             detail_data = self._analyzelogic(
-                raw_text_data.raw_text, raw_text_data.id, alt_year
+                raw_text_data.raw_text, raw_text_data.id, analyze_dt
             )
 
             # 解析結果をコミットする
@@ -108,7 +108,7 @@ class FwdWNagaoka:
             session.commit()
 
     def _analyzelogic(
-        self, disaster_text: str, raw_text_id: int, alt_year=None
+        self, disaster_text: str, raw_text_id: int, analyze_dt: datetime.datetime
     ) -> NagaokaDisasterDetail:
         # 解析結果を格納するインスタンス生成
         detail_data = NagaokaDisasterDetail()
@@ -124,7 +124,7 @@ class FwdWNagaoka:
 
         # 災害発生時刻の年を決定する
         # TODO: 年末を考慮した処理の実装
-        open_year = alt_year if alt_year else datetime.datetime.now().year
+        open_year = analyze_dt.year
 
         # 災害発生時刻を決定する
         detail_data.open_dt = datetime.datetime(
@@ -146,10 +146,6 @@ class FwdWNagaoka:
             r"(?P<address>.+?)(に|の)(?P<category>.+?)(は|のため)(?P<status>.+)$",
             m_1st.group("next"),
         )
-        # self._logger.info(f'{m_1st.group("next")=}')
-        # self._logger.info(
-        #     f'{m_1st.group("next")=}, {m_2nd.group("address")=}, {m_2nd.group("category")=}, {m_2nd.group("status")=}'
-        # )
 
         # 災害種別を決定する
         category_str = m_2nd.group("category")
@@ -173,18 +169,20 @@ class FwdWNagaoka:
 
         # 状態を決定する
         # TODO: 終了時の判定
-        # TODO: close_dtに設定する時刻の解析（鎮圧、鎮火、救助終了）
         status_str = m_2nd.group("status")
         if re.search(r"消防車が出動しました", status_str):
             detail_data.status = DisasterStatus.発生
         elif re.search(r"救助終了しました", status_str):
             detail_data.status = DisasterStatus.救助終了
+            detail_data.close_dt = self._get_close_dt(status_str, detail_data.open_dt)
         elif re.search(r"消火の必要はありませんでした", status_str):
             detail_data.status = DisasterStatus.消火不要
         elif re.search(r"鎮圧しました", status_str):
             detail_data.status = DisasterStatus.鎮圧
+            detail_data.close_dt = self._get_close_dt(status_str, detail_data.open_dt)
         elif re.search(r"鎮火しました", status_str):
             detail_data.status = DisasterStatus.鎮火
+            detail_data.close_dt = self._get_close_dt(status_str, detail_data.open_dt)
         else:
             detail_data.status = DisasterStatus.終了
 
@@ -193,6 +191,35 @@ class FwdWNagaoka:
         # detail_data.address3 = "N丁目"
 
         return detail_data
+
+    def _get_close_dt(
+        self, status_str: str, open_dt: datetime.datetime
+    ) -> Optional[datetime.datetime]:
+        # 文字列から災害終了時刻の時・分を解析する
+        close_dt_m = re.match(r"(?P<hour>\d{2}):(?P<minute>\d{2}).+$", status_str)
+
+        # 災害終了時刻を決定する
+        if not close_dt_m:
+            # 災害終了時刻が記載されていない場合はNoneを返却する
+            return None
+        else:
+            # 災害発生時刻、文字列解析結果を考慮して終了時刻を決定する
+
+            # いったん、災害発生と同日に終了したものとして時刻を設定する
+            close_dt = datetime.datetime(
+                year=open_dt.year,
+                month=open_dt.month,
+                day=open_dt.day,
+                hour=int(close_dt_m.group("hour")),
+                minute=int(close_dt_m.group("minute")),
+            )
+
+            # close_dt < open_dt の場合は、翌日に終了したとして一日進める
+            if close_dt < open_dt:
+                close_dt += datetime.timedelta(days=1)
+
+            # 終了時刻を返却する
+            return close_dt
 
 
 if __name__ == "__main__":
