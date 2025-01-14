@@ -89,21 +89,32 @@ class FwdWNagaoka:
     def _analyze_disaster_text(self, analyze_dt=datetime.datetime.now()):
         session: Session = database_manager.SESSION()
 
-        # 分析対象のNagaokaRawText一覧をDBから取得する
-        not_analyzed_list = (
-            session.query(NagaokaRawText)
-            .filter(NagaokaRawText.detail_info == sqlalchemy.null())
-            .all()
-        )
+        try:
+            # 分析対象のNagaokaRawText一覧をDBから取得する
+            self._logger.info("文字列解析処理開始")
+            not_analyzed_list = (
+                session.query(NagaokaRawText)
+                .filter(NagaokaRawText.detail_info == sqlalchemy.null())
+                .all()
+            )
 
-        # 分析処理を実行する
-        self._logger.info(f"Not Analyzed: {len(not_analyzed_list)}")
-        for raw_text_data in not_analyzed_list:
-            detail_data = self._analyzelogic(raw_text_data, analyze_dt)
+            # 分析処理を実行する
+            self._logger.info(f"解析対象件数: [{len(not_analyzed_list)}]")
+            for raw_text_data in not_analyzed_list:
+                detail_data = self._analyzelogic(raw_text_data, analyze_dt)
 
-            # 解析結果をコミットする
-            session.add(detail_data)
-            session.commit()
+                # 分析結果をDBに送信しコミットする
+                session.add(detail_data)
+                session.commit()
+
+            self._logger.info("文字列解析処理完了")
+        except Exception:
+            # 解析に失敗した場合は処理をロールバックする
+            self._logger.exception("文字列解析処理失敗")
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def _analyzelogic(
         self, raw_text_data: NagaokaRawText, analyze_dt: datetime.datetime
@@ -121,8 +132,12 @@ class FwdWNagaoka:
         )
 
         # 災害発生時刻の年を決定する
-        # TODO: 年末を考慮した処理の実装
+        # 基本的にはanalyze_dt の年を設定するが、
+        # analyze_dt.month < m_1st.month の場合は前年と判定して
+        # analyze_dt.year - 1 を設定する
         open_year = analyze_dt.year
+        if analyze_dt.month < int(m_1st.group("month")):
+            open_year -= 1
 
         # 災害発生時刻を決定する
         detail_data.open_dt = datetime.datetime(
@@ -189,6 +204,7 @@ class FwdWNagaoka:
         else:
             detail_data.status = DisasterStatus.終了
 
+        # 解析結果を返却する
         return detail_data
 
     def _get_close_dt(
