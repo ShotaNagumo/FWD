@@ -161,9 +161,12 @@ class FwdWNagaoka:
         # 災害種別詳細を設定する
         detail_data.sub_category = category_str
 
-        # 住所を決定する
-        # TODO: より詳細な住所解析
-        detail_data.address2 = m_2nd.group("address")
+        # 住所を空白で分割しaddress2とaddress3を設定する
+        # address3に該当する部分が無い場合はNULLとする
+        addr2, addr3 = m_2nd.group("address").split(" ")
+        detail_data.address2 = addr2
+        if addr3:
+            detail_data.address3 = addr3
 
         # 状態を決定する
         status_str = m_2nd.group("status")
@@ -185,10 +188,6 @@ class FwdWNagaoka:
             detail_data.close_dt = self._get_close_dt(status_str, detail_data.open_dt)
         else:
             detail_data.status = DisasterStatus.終了
-
-        # TODO: 以下の実装は仮（NotNull制約を満たすため）
-        # detail_data.address2 = "○○"
-        # detail_data.address3 = "N丁目"
 
         return detail_data
 
