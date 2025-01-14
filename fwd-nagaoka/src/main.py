@@ -99,27 +99,25 @@ class FwdWNagaoka:
         # 分析処理を実行する
         self._logger.info(f"Not Analyzed: {len(not_analyzed_list)}")
         for raw_text_data in not_analyzed_list:
-            detail_data = self._analyzelogic(
-                raw_text_data.raw_text, raw_text_data.id, analyze_dt
-            )
+            detail_data = self._analyzelogic(raw_text_data, analyze_dt)
 
             # 解析結果をコミットする
             session.add(detail_data)
             session.commit()
 
     def _analyzelogic(
-        self, disaster_text: str, raw_text_id: int, analyze_dt: datetime.datetime
+        self, raw_text_data: NagaokaRawText, analyze_dt: datetime.datetime
     ) -> NagaokaDisasterDetail:
         # 解析結果を格納するインスタンス生成
         detail_data = NagaokaDisasterDetail()
 
         # raw_text_idを設定する
-        detail_data.raw_text_id = raw_text_id
+        detail_data.raw_text_id = raw_text_data.id
 
         # 一回目の解析（発生時刻、都市名を解析する）
         m_1st = re.match(
             r"(?P<month>\d{2})月(?P<day>\d{2})日 (?P<hour>\d{2}):(?P<minute>\d{2}) (?P<city>\S+?) (?P<next>.+)。$",
-            disaster_text,
+            raw_text_data.raw_text,
         )
 
         # 災害発生時刻の年を決定する
@@ -168,10 +166,12 @@ class FwdWNagaoka:
         detail_data.address2 = m_2nd.group("address")
 
         # 状態を決定する
-        # TODO: 終了時の判定
         status_str = m_2nd.group("status")
         if re.search(r"消防車が出動しました", status_str):
-            detail_data.status = DisasterStatus.発生
+            if raw_text_data.text_pos == TextPosition.CURR:
+                detail_data.status = DisasterStatus.発生
+            else:
+                detail_data.status = DisasterStatus.終了
         elif re.search(r"救助終了しました", status_str):
             detail_data.status = DisasterStatus.救助終了
             detail_data.close_dt = self._get_close_dt(status_str, detail_data.open_dt)
