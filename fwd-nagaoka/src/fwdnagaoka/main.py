@@ -22,7 +22,7 @@ class FwdWNagaoka:
     WEBPAGE_ENC: Final[str] = "sjis"
 
     def __init__(self):
-        log_config_file = Path(__file__).parents[2] / "config" / "log_format.yaml"
+        log_config_file = Path(__file__).parents[3] / "config" / "log_format.yaml"
         logger_initializer.initialize(log_config_file)
         self._logger = logging.getLogger("fwd.nagaoka")
 
