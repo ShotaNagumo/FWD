@@ -107,7 +107,7 @@ class FwdWNagaoka:
                     # DBにコミットする
                     session.commit()
                     self._logger.info(
-                        f"「過去」の災害情報登録完了 ID=[{raw_text_data.id}]"
+                        f"「現在」の災害情報登録完了 ID=[{raw_text_data.id}]"
                     )
 
         except Exception:
