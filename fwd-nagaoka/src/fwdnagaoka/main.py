@@ -1,11 +1,13 @@
 import datetime
 import logging
 import re
-from pathlib import Path
 from typing import Final, Optional
 
 import sqlalchemy
-from datamodel import (
+from fwdutil import database_manager, request_wrapper
+from sqlalchemy.orm.session import Session
+
+from fwdnagaoka.datamodel import (
     DisasterMainCategory,
     DisasterStatus,
     NagaokaDisasterDetail,
@@ -13,21 +15,18 @@ from datamodel import (
     TextPosition,
     create_table_all,
 )
-from fwdutil import database_manager, logger_initializer, request_wrapper
-from sqlalchemy.orm.session import Session
 
 
-class FwdWNagaoka:
+class FwdNagaoka:
     WEBPAGE_URL: Final[str] = "http://www.nagaoka-fd.com/fire/saigai/saigaipc.html"
     WEBPAGE_ENC: Final[str] = "sjis"
 
     def __init__(self):
-        log_config_file = Path(__file__).parents[3] / "config" / "log_format.yaml"
-        logger_initializer.initialize(log_config_file)
         self._logger = logging.getLogger("fwd.nagaoka")
+        self._logger.info("FwdNagaoka initialized")
 
         webpage_text = request_wrapper.download_webpage(
-            FwdWNagaoka.WEBPAGE_URL, FwdWNagaoka.WEBPAGE_ENC
+            FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
         )
         webpage_text_dev = self._split_webtext(self._cleansing_webtext(webpage_text))
         self._commit_disaster_list_curr(webpage_text_dev[0])
@@ -330,4 +329,4 @@ class FwdWNagaoka:
 
 if __name__ == "__main__":
     create_table_all()
-    f = FwdWNagaoka()
+    f = FwdNagaoka()
