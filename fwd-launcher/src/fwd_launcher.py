@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from fwdnagaoka.main import FwdNagaoka
+from fwdnagaoka.fwd_nagaoka import FwdNagaoka
 from fwdutil import logger_initializer
 
 
@@ -12,7 +12,8 @@ def create_config_file(args):
 def execute_nagaoka(args):
     logconfig_file_path = Path(__file__).parents[2] / "config" / "log_format.yaml"
     logger_initializer.initialize(logconfig_file_path)
-    _ = FwdNagaoka()
+    fwd_nagaoka = FwdNagaoka()
+    fwd_nagaoka.execute()
 
 
 def _create_argparser() -> argparse.ArgumentParser:

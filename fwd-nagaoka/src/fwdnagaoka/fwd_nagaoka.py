@@ -23,8 +23,8 @@ class FwdNagaoka:
 
     def __init__(self):
         self._logger = logging.getLogger("fwd.nagaoka")
-        self._logger.info("FwdNagaoka initialized")
 
+    def execute(self):
         webpage_text = request_wrapper.download_webpage(
             FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
         )
