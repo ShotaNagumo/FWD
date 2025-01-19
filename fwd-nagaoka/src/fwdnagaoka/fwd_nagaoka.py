@@ -25,6 +25,7 @@ class FwdNagaoka:
     WEBPAGE_ENC: Final[str] = "sjis"
 
     def __init__(self):
+        """コンストラクタ"""
         self._logger = logging.getLogger("fwd.nagaoka")
         _template_dir = Path(__file__).parents[2] / "resource" / "template"
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
@@ -174,6 +175,11 @@ class FwdNagaoka:
             session.close()
 
     def _analyze(self, analyze_dt=datetime.datetime.now()):
+        """災害文字列の解析を実行する
+
+        Args:
+            analyze_dt (datetime.datetime, optional): 解析を実行する日時情報. Defaults to datetime.datetime.now().
+        """
         session: Session = database_manager.SESSION()
 
         try:
@@ -209,6 +215,18 @@ class FwdNagaoka:
     def _analyze_text(
         self, raw_text_data: NagaokaRawText, analyze_dt: datetime.datetime
     ) -> NagaokaDisasterDetail:
+        """災害文字列の解析ロジック
+
+        Args:
+            raw_text_data (NagaokaRawText): 解析対象の災害情報
+            analyze_dt (datetime.datetime): 解析を実行する日時情報
+
+        Raises:
+            ValueError: 解析処理に失敗した場合
+
+        Returns:
+            NagaokaDisasterDetail: 解析結果情報
+        """
         try:
             # 解析結果を格納するインスタンス生成
             detail_data = NagaokaDisasterDetail()
@@ -316,6 +334,15 @@ class FwdNagaoka:
     def _get_close_dt(
         self, status_str: str, open_dt: datetime.datetime
     ) -> Optional[datetime.datetime]:
+        """災害終了時刻を解析する
+
+        Args:
+            status_str (str): 終了時刻が含まれた文字列
+            open_dt (datetime.datetime): 災害発生時刻情報
+
+        Returns:
+            Optional[datetime.datetime]: 災害終了時刻情報。含まれていなかった場合はNone。
+        """
         # 文字列から災害終了時刻の時・分を解析する
         close_dt_m = re.match(r"(?P<hour>\d{2}):(?P<minute>\d{2}).+$", status_str)
 
