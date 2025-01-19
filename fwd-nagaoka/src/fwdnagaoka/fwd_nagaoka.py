@@ -177,6 +177,10 @@ class FwdNagaoka:
                 self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理開始")
                 detail_data = self._analyze_text(raw_text_data, analyze_dt)
 
+                # statusが「終了」の場合は通知不要を設定する
+                if detail_data.status == DisasterStatus.終了:
+                    raw_text_data.notify_status = NotifyStatus.SKIPPED
+
                 # 分析結果をDBに送信しコミットする
                 session.add(detail_data)
                 session.commit()
