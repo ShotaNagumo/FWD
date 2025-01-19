@@ -46,15 +46,35 @@ def download_webpage(webpage_url: str, webpage_enc: str, timeout_sec=10) -> str:
         raise
 
 
+def post_to_discord(webhook_url: str, message: str, timeout_sec=10):
+    """DiscordのWebhookにPOSTする
+
+    Args:
+        webhook_url (str): WebhookのURL
+        message (str): 送信するテキスト
+        timeout_sec (int, optional): 送信時のタイムアウト（秒）. Defaults to 10.
+    """
+    try:
+        # loggerを取得
+        logger = getLogger("requests")
+
+        # DiscordのWebhookにPOSTする
+        logger.info(f"POST: {webhook_url}")
+        res = requests.post(webhook_url, json={"content": message}, timeout=timeout_sec)
+        res.raise_for_status()  # HTTPレスポンスコードに応じたExceptionをraiseする
+
+        # POST成功ログ
+        logger.info(f"Post SUCCEED. Status={res.status_code}.")
+
+    except requests.ConnectionError:
+        logger.error(f"Post FAILED. ConnectionError, Status={res.status_code}.")
         raise
     except requests.HTTPError:
-        logger.exception(f"Download FAILED. HTTPError, Status={res.status_code}.")
+        logger.error(f"Post FAILED. HTTPError, Status={res.status_code}.")
         raise
     except requests.Timeout:
-        logger.exception(f"Download FAILED. Timeout, Status={res.status_code}.")
+        logger.error(f"Post FAILED. Timeout, Status={res.status_code}.")
         raise
     except requests.RequestException:
-        logger.exception(
-            f"Download FAILED. RequestException, Status={res.status_code}."
-        )
+        logger.error(f"Post FAILED. RequestException, Status={res.status_code}.")
         raise
