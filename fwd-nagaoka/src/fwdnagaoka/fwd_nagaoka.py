@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Final, Optional
 
 import sqlalchemy
-from fwdutil import database_manager, request_wrapper
+from fwdutil import config, database_manager, request_wrapper
 from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.orm.session import Session
 
@@ -28,6 +28,7 @@ class FwdNagaoka:
         self._logger = logging.getLogger("fwd.nagaoka")
         _template_dir = Path(__file__).parents[2] / "resource" / "template"
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
+        self._webhook_url = config.get_webhook_url("nagaoka")
 
     def execute(self):
         webpage_text = request_wrapper.download_webpage(
@@ -337,6 +338,7 @@ class FwdNagaoka:
             return close_dt
 
     def _notify(self):
+        """通知処理を実行する"""
         session: Session = database_manager.SESSION()
 
         try:
@@ -347,9 +349,15 @@ class FwdNagaoka:
                 .all()
             )
 
+            # 通知を実行する
             for raw_text_data in not_notified_list:
+                # 通知文の作成
                 notify_text = self._create_notify_text(raw_text_data.detail_info)
-                self._logger.debug(f"\n{notify_text}")
+                # 通知の実行
+                request_wrapper.post_to_discord(self._webhook_url, notify_text)
+                # 状態を通知済みに更新
+                raw_text_data.notify_status = NotifyStatus.NOTIFIED
+                session.commit()
 
         except Exception:
             # 通知に失敗した場合は処理をロールバックする
