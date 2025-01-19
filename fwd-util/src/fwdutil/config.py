@@ -36,3 +36,27 @@ def get_variable_dir() -> Path:
 
 
 def get_webhook_url(city_name: str) -> str:
+    """指定した都市名のWebhook URLを取得する
+
+    Args:
+        city_name (str): 都市名
+
+    Raises:
+        ValueError: 指定した都市名の設定ブロック未定義
+        ValueError: webhook_url未定義
+
+    Returns:
+        str: Webhook URL
+    """
+
+    # 設定ファイルデータが読み込まれていない場合、データを読み出す
+    global SETTING_DATA
+    if SETTING_DATA is None:
+        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text())
+
+    # Webhook URLを取得する
+    if not SETTING_DATA.get(city_name):
+        raise ValueError("指定した都市名の設定ブロック未定義")
+    if not (webhook_url := SETTING_DATA.get(city_name).get("webhook_url")):
+        raise ValueError("webhook_url未定義")
+    return webhook_url
