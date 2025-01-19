@@ -33,7 +33,19 @@ def download_webpage(webpage_url: str, webpage_enc: str, timeout_sec=10) -> str:
         return text_data
 
     except requests.ConnectionError:
-        logger.exception(f"Download FAILED. ConnectionError, Status={res.status_code}.")
+        logger.error(f"Download FAILED. ConnectionError, Status={res.status_code}.")
+        raise
+    except requests.HTTPError:
+        logger.error(f"Download FAILED. HTTPError, Status={res.status_code}.")
+        raise
+    except requests.Timeout:
+        logger.error(f"Download FAILED. Timeout, Status={res.status_code}.")
+        raise
+    except requests.RequestException:
+        logger.error(f"Download FAILED. RequestException, Status={res.status_code}.")
+        raise
+
+
         raise
     except requests.HTTPError:
         logger.exception(f"Download FAILED. HTTPError, Status={res.status_code}.")
