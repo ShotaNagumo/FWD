@@ -9,6 +9,10 @@ def create_config_file(args):
     pass
 
 
+def setup_fwd(args):
+    FwdNagaoka.setup()
+
+
 def execute_nagaoka(args):
     logconfig_file_path = Path(__file__).parents[2] / "config" / "log_format.yaml"
     logger_initializer.initialize(logconfig_file_path)
@@ -24,6 +28,10 @@ def _create_argparser() -> argparse.ArgumentParser:
     # 設定ファイルを作成するコマンド定義
     parser_create_config = subparsers.add_parser("create_config")
     parser_create_config.set_defaults(func=create_config_file)
+
+    # 各FWDクラスをセットアップするコマンド定義
+    parser_setup_fwd = subparsers.add_parser("setup_fwd")
+    parser_setup_fwd.set_defaults(func=setup_fwd)
 
     # 長岡市の処理を実行するコマンド定義
     parser_execute_nagaoka = subparsers.add_parser("execute_nagaoka")

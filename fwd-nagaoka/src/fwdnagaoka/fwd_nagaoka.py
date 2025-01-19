@@ -30,6 +30,11 @@ class FwdNagaoka:
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
         self._webhook_url = config.get_webhook_url("nagaoka")
 
+    @staticmethod
+    def setup():
+        """テーブルを作成する"""
+        create_table_all()
+
     def execute(self):
         webpage_text = request_wrapper.download_webpage(
             FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
@@ -412,8 +417,3 @@ class FwdNagaoka:
             data["close_dt"] = ""
 
         return data
-
-
-if __name__ == "__main__":
-    create_table_all()
-    f = FwdNagaoka()
