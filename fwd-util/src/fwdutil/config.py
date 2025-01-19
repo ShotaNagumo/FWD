@@ -12,6 +12,10 @@ SETTING_DATA = None
 def get_variable_dir() -> Path:
     """FWDソフトウェアのVariableデータ（実行中に増減するデータ）を保存するディレクトリのパスを取得する
 
+    Raises:
+        ValueError: variable_dir未定義
+        ValueError: variable_dirがディレクトリパスとして不正
+
     Returns:
         Path: Variableディレクトリのパス
     """
@@ -22,4 +26,13 @@ def get_variable_dir() -> Path:
         SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text())
 
     # 読み出したデータをPathに変換する
-    return Path(SETTING_DATA["variable_dir"])
+    if not (variable_dir := SETTING_DATA.get("variable_dir")):
+        raise ValueError("variable_dir未定義")
+    try:
+        variable_path = Path(variable_dir)
+        return variable_path
+    except Exception:
+        raise ValueError("variable_dir不正")
+
+
+def get_webhook_url(city_name: str) -> str:
