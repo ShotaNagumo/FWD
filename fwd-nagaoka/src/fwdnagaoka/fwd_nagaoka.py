@@ -1,10 +1,12 @@
 import datetime
 import logging
 import re
+from pathlib import Path
 from typing import Final, Optional
 
 import sqlalchemy
 from fwdutil import database_manager, request_wrapper
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.orm.session import Session
 
 from fwdnagaoka.datamodel import (
@@ -12,6 +14,7 @@ from fwdnagaoka.datamodel import (
     DisasterStatus,
     NagaokaDisasterDetail,
     NagaokaRawText,
+    NotifyStatus,
     TextPosition,
     create_table_all,
 )
@@ -23,6 +26,8 @@ class FwdNagaoka:
 
     def __init__(self):
         self._logger = logging.getLogger("fwd.nagaoka")
+        _template_dir = Path(__file__).parents[2] / "resource" / "template"
+        self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
 
     def execute(self):
         webpage_text = request_wrapper.download_webpage(
@@ -32,6 +37,7 @@ class FwdNagaoka:
         self._commit_disaster_list_curr(webpage_text_dev[0])
         self._commit_disaster_list_past(webpage_text_dev[1])
         self._analyze()
+        self._notify()
 
     def _cleansing_webtext(self, webpage_text: str) -> str:
         """htmlテキスト解析前に、前処理として整形処理を行う
@@ -329,6 +335,75 @@ class FwdNagaoka:
 
             # 終了時刻を返却する
             return close_dt
+
+    def _notify(self):
+        session: Session = database_manager.SESSION()
+
+        try:
+            # 通知が必要な災害情報を検索する
+            not_notified_list = (
+                session.query(NagaokaRawText)
+                .filter(NagaokaRawText.notify_status.is_(NotifyStatus.NOT_YET))
+                .all()
+            )
+
+            for raw_text_data in not_notified_list:
+                notify_text = self._create_notify_text(raw_text_data.detail_info)
+                self._logger.debug(f"\n{notify_text}")
+
+        except Exception:
+            # 通知に失敗した場合は処理をロールバックする
+            self._logger.error("通知処理失敗")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def _create_notify_text(self, detail_data: NagaokaDisasterDetail) -> str:
+        """通知文を作成する
+
+        Args:
+            detail_data (NagaokaDisasterDetail): 解析結果データ
+
+        Returns:
+            str: 作成した通知文
+        """
+        try:
+            template = self._j2_env.get_template("notify.j2")
+            data = self._create_data_for_create_notify_text(detail_data)
+            notify_text = template.render(data)
+            return notify_text
+        except Exception:
+            self._logger.error("通知文の作成に失敗")
+            raise
+
+    def _create_data_for_create_notify_text(
+        self, detail_data: NagaokaDisasterDetail
+    ) -> dict[str, str]:
+        """通知文を作成するために使用するデータへの変換を行う
+
+        Args:
+            detail_data (NagaokaDisasterDetail): 解析結果データ
+
+        Returns:
+            dict[str, str]: 通知文を作成するために使用するデータ
+        """
+        datetime_format_str = r"%Y/%m/%d %H:%M"
+        data = {
+            "main_category": detail_data.main_category.name,
+            "sub_category": detail_data.sub_category,
+            "open_dt": detail_data.open_dt.strftime(datetime_format_str),
+            "status": detail_data.status.name,
+            "address1": detail_data.address1,
+            "address2": detail_data.address2,
+            "address3": detail_data.address3,
+        }
+        if detail_data.close_dt:
+            data["close_dt"] = detail_data.close_dt.strftime(datetime_format_str)
+        else:
+            data["close_dt"] = ""
+
+        return data
 
 
 if __name__ == "__main__":

@@ -1,0 +1,29 @@
+{% extends "notify_base.j2" %}
+
+{% block title %}
+{%- if status == "発生" -%}
+{{- main_category -}}
+{%- else -%}
+{{- status -}}
+{%- endif -%}
+{% endblock %}
+
+{% block address %}
+{%- if address1 and address3 -%}
+{{- address1 }} {{ address2 }} {{ address3 -}}
+{%- elif address1 -%}
+{{- address1 }} {{ address2 -}}
+{%- elif address3 -%}
+{{- address2 }} {{ address3 -}}
+{%- else -%}
+{{- address2 -}}
+{%- endif -%}
+{% endblock %}
+
+{% block timestamp %}
+{%- if close_dt -%}
+終了日時：{{ close_dt }} （発生日時：{{ open_dt }}）
+{%- else -%}
+発生日時：{{ open_dt }}
+{%- endif -%}
+{% endblock %}
