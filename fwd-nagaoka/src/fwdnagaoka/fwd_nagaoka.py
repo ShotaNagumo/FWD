@@ -37,14 +37,38 @@ class FwdNagaoka:
         create_table_all()
 
     def execute(self):
-        webpage_text = request_wrapper.download_webpage(
-            FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
-        )
-        webpage_text_dev = self._split_webtext(self._cleansing_webtext(webpage_text))
-        self._commit_disaster_list_curr(webpage_text_dev[0])
-        self._commit_disaster_list_past(webpage_text_dev[1])
-        self._analyze()
-        self._notify()
+        """災害情報の取得から通知までの一連の処理を実行する"""
+        try:
+            self._logger.info("execute() 実行開始")
+            # Webから災害情報テキストを取得
+            webpage_text = request_wrapper.download_webpage(
+                FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
+            )
+
+            # 災害情報テキストを前処理・分割
+            webpage_text_dev = self._split_webtext(
+                self._cleansing_webtext(webpage_text)
+            )
+
+            # 災害情報（現在発生している災害）をDBへ登録
+            self._commit_disaster_list_curr(webpage_text_dev[0])
+
+            # 災害情報（過去の災害情報）をDBへ登録
+            self._commit_disaster_list_past(webpage_text_dev[1])
+
+            # 災害情報の解析
+            self._analyze()
+
+            # 災害情報の通知
+            self._notify()
+
+            self._logger.info("execute() 実行完了")
+        except Exception:
+            self._logger.exception("execute() 実行失敗")
+
+    def store_old_data(self):
+        # TODO: 過去データのインポート機能追加
+        pass
 
     def _cleansing_webtext(self, webpage_text: str) -> str:
         """htmlテキスト解析前に、前処理として整形処理を行う
