@@ -70,7 +70,44 @@ class FwdNagaoka:
         # TODO: 過去データのインポート機能追加
         self._logger.info("store_old_data() 実行開始")
         try:
+            # 指定されたディレクトリ内の対象ファイル一覧を検索する
             text_dir_path = Path(text_dir)
+            text_files = [f for f in text_dir_path.glob("*.txt")]
+
+            # テキストファイルから災害情報を読み込み、解析処理を行う
+            for index, text_file in enumerate(text_files):
+                # ファイル名から実行時刻を取得する
+                filename_m = re.match(
+                    r"(?P<date_time_str>\d{8}_\d{4})\.txt", text_file.name
+                )
+                if not filename_m:
+                    self._logger.info(f"ファイル名不正のためスキップ：{text_file.name}")
+                    continue
+                else:
+                    self._logger.info(
+                        f"災害情報の登録[{index + 1}/{len(text_files)}]：{text_file.name}"
+                    )
+                execute_time = datetime.datetime.strptime(
+                    filename_m.group("date_time_str"), "%Y%m%d_%H%M"
+                )
+
+                # ファイルから読み込む
+                webpage_text = text_file.read_text(encoding="utf-8")
+
+                # 災害情報テキストを前処理・分割
+                webpage_text_dev = self._split_webtext(
+                    self._cleansing_webtext(webpage_text)
+                )
+
+                # 災害情報（現在発生している災害）をDBへ登録
+                self._commit_disaster_list_curr(webpage_text_dev[0])
+
+                # 災害情報（過去の災害情報）をDBへ登録
+                self._commit_disaster_list_past(webpage_text_dev[1])
+
+                # 災害情報の解析
+                self._analyze(execute_time, True)
+
         except Exception:
             self._logger.exception("store_old_data() 実行失敗")
         self._logger.info("store_old_data() 実行終了")
@@ -203,11 +240,12 @@ class FwdNagaoka:
         finally:
             session.close()
 
-    def _analyze(self, analyze_dt=datetime.datetime.now()):
+    def _analyze(self, analyze_dt=datetime.datetime.now(), old_data=False):
         """災害文字列の解析を実行する
 
         Args:
             analyze_dt (datetime.datetime, optional): 解析を実行する日時情報. Defaults to datetime.datetime.now().
+            old_data (bool, optional): 過去の災害情報かを表すフラグ. Defaults to False.
         """
         session: Session = database_manager.SESSION()
 
@@ -226,6 +264,10 @@ class FwdNagaoka:
 
                 # statusが「終了」の場合は通知不要を設定する
                 if detail_data.status == DisasterStatus.終了:
+                    raw_text_data.notify_status = NotifyStatus.SKIPPED
+
+                # 過去の災害情報を処理した場合は通知不要を設定する
+                if old_data:
                     raw_text_data.notify_status = NotifyStatus.SKIPPED
 
                 # 分析結果をDBに送信しコミットする
