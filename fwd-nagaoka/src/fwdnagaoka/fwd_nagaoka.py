@@ -66,9 +66,14 @@ class FwdNagaoka:
         except Exception:
             self._logger.exception("execute() 実行失敗")
 
-    def store_old_data(self):
+    def store_old_data(self, text_dir: str):
         # TODO: 過去データのインポート機能追加
-        pass
+        self._logger.info("store_old_data() 実行開始")
+        try:
+            text_dir_path = Path(text_dir)
+        except Exception:
+            self._logger.exception("store_old_data() 実行失敗")
+        self._logger.info("store_old_data() 実行終了")
 
     def _cleansing_webtext(self, webpage_text: str) -> str:
         """htmlテキスト解析前に、前処理として整形処理を行う

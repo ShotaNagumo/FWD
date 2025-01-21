@@ -20,6 +20,13 @@ def execute_nagaoka(args):
     fwd_nagaoka.execute()
 
 
+def store_old_nagaoka(args):
+    logconfig_file_path = Path(__file__).parents[2] / "config" / "log_format.yaml"
+    logger_initializer.initialize(logconfig_file_path)
+    fwdNagaoka = FwdNagaoka()
+    fwdNagaoka.store_old_data(args.text_dir)
+
+
 def _create_argparser() -> argparse.ArgumentParser:
     # parser本体、supparserを作成する
     argparser = argparse.ArgumentParser()
@@ -36,6 +43,11 @@ def _create_argparser() -> argparse.ArgumentParser:
     # 長岡市の処理を実行するコマンド定義
     parser_execute_nagaoka = subparsers.add_parser("execute_nagaoka")
     parser_execute_nagaoka.set_defaults(func=execute_nagaoka)
+
+    # 長岡市の過去データを設定するコマンド定義
+    parser_store_old_nagaoka = subparsers.add_parser("store_old_nagaoka")
+    parser_store_old_nagaoka.add_argument("text_dir", type=str)
+    parser_store_old_nagaoka.set_defaults(func=store_old_nagaoka)
 
     # parser本体を返却
     return argparser
