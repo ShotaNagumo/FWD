@@ -338,7 +338,7 @@ class FwdNagaoka:
 
             # 二回目の解析（災害種別、住所、状態を解析する）
             m_2nd = re.match(
-                r"(?P<address>.+?)(に|の)(?P<category>.+?)(は|のため)(?P<status>.+)$",
+                r"(?P<address>.+?)(に|の)(?P<category>\S+?)(は|のため)(?P<status>.+)$",
                 m_1st.group("next"),
             )
             if not m_2nd:
