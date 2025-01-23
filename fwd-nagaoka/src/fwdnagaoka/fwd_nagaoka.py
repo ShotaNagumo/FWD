@@ -151,12 +151,16 @@ class FwdNagaoka:
             m.group(2),
         ]
 
-    def _commit_disaster_list_curr(self, webpage_text_curr: str):
+    def _commit_disaster_list_curr(
+        self, webpage_text_curr: str, analayze_dt=datetime.datetime.now()
+    ):
         """「現在発生している災害」の文字列を抽出してDBに登録する
 
         Args:
             webpage_text_curr (str): 「現在発生している災害」の文字列
+            analayze_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to the current date and time.
         """
+
         session: Session = database_manager.SESSION()
 
         # 災害情報の文字列を検索する
@@ -178,6 +182,7 @@ class FwdNagaoka:
                     raw_text_data = NagaokaRawText(
                         raw_text=match_str,
                         text_pos=TextPosition.CURR,
+                        retr_dt=analayze_dt,
                     )
                     # DBに送信する
                     session.add(raw_text_data)
@@ -196,11 +201,14 @@ class FwdNagaoka:
         finally:
             session.close()
 
-    def _commit_disaster_list_past(self, webpage_text_past: str):
+    def _commit_disaster_list_past(
+        self, webpage_text_past: str, analayze_dt=datetime.datetime.now()
+    ):
         """「過去の災害」の文字列を抽出してDBに登録する
 
         Args:
             webpage_text_past (str): 「過去の災害」の文字列
+            analayze_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to the current date and time.
         """
         session: Session = database_manager.SESSION()
 
@@ -223,6 +231,7 @@ class FwdNagaoka:
                     raw_text_data = NagaokaRawText(
                         raw_text=match_str,
                         text_pos=TextPosition.PAST,
+                        retr_dt=analayze_dt,
                     )
                     session.add(raw_text_data)
 
