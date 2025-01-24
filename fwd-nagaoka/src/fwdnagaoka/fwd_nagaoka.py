@@ -72,9 +72,10 @@ class FwdNagaoka:
         try:
             # 指定されたディレクトリ内の対象ファイル一覧を検索する
             text_dir_path = Path(text_dir)
-            text_files = [f for f in text_dir_path.glob("*.txt")]
+            text_files = [_ for _ in text_dir_path.glob("*.txt")]
 
             # テキストファイルから災害情報を読み込み、解析処理を行う
+            self._logger.info("災害情報の登録開始")
             for index, text_file in enumerate(text_files):
                 # ファイル名から実行時刻を取得する
                 filename_m = re.match(
@@ -87,7 +88,7 @@ class FwdNagaoka:
                     self._logger.info(
                         f"災害情報の登録[{index + 1}/{len(text_files)}]：{text_file.name}"
                     )
-                execute_time = datetime.datetime.strptime(
+                retrieve_time = datetime.datetime.strptime(
                     filename_m.group("date_time_str"), "%Y%m%d_%H%M"
                 )
 
@@ -100,13 +101,15 @@ class FwdNagaoka:
                 )
 
                 # 災害情報（現在発生している災害）をDBへ登録
-                self._commit_disaster_list_curr(webpage_text_dev[0])
+                self._commit_disaster_list_curr(webpage_text_dev[0], retrieve_time)
 
                 # 災害情報（過去の災害情報）をDBへ登録
-                self._commit_disaster_list_past(webpage_text_dev[1])
+                self._commit_disaster_list_past(webpage_text_dev[1], retrieve_time)
 
-                # 災害情報の解析
-                self._analyze(execute_time, True)
+            # 災害情報の解析
+            self._logger.info("災害情報の登録完了・解析開始")
+            self._analyze()
+            self._logger.info("災害情報の解析完了")
 
         except Exception:
             self._logger.exception("store_old_data() 実行失敗")
@@ -151,23 +154,29 @@ class FwdNagaoka:
             m.group(2),
         ]
 
-    def _commit_disaster_list_curr(
-        self, webpage_text_curr: str, analayze_dt=datetime.datetime.now()
-    ):
+    def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
         """「現在発生している災害」の文字列を抽出してDBに登録する
 
         Args:
             webpage_text_curr (str): 「現在発生している災害」の文字列
-            analayze_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to the current date and time.
+            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
 
         session: Session = database_manager.SESSION()
 
         # 災害情報の文字列を検索する
         try:
+            # execute_dt の指定状況に応じ、登録する情報を決定する
+            retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
+            notify_stat = (
+                NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
+            )
+
+            # 文字列解析
             matches = re.findall(
                 r"<span>(\d{2}月\d{2}日.+?。)</span>", webpage_text_curr
             )
+
             for match_str in matches[::-1]:
                 # 登録済みかを確認する
                 registered = bool(
@@ -176,13 +185,15 @@ class FwdNagaoka:
                     .filter(NagaokaRawText.text_pos == TextPosition.CURR)
                     .count()
                 )
+
                 # 登録されていない場合は登録する
                 if not registered:
                     # 登録する情報を作成する
                     raw_text_data = NagaokaRawText(
                         raw_text=match_str,
+                        retr_dt=retrieve_dt,
                         text_pos=TextPosition.CURR,
-                        retr_dt=analayze_dt,
+                        notify_status=notify_stat,
                     )
                     # DBに送信する
                     session.add(raw_text_data)
@@ -201,18 +212,22 @@ class FwdNagaoka:
         finally:
             session.close()
 
-    def _commit_disaster_list_past(
-        self, webpage_text_past: str, analayze_dt=datetime.datetime.now()
-    ):
+    def _commit_disaster_list_past(self, webpage_text_past: str, execute_dt=None):
         """「過去の災害」の文字列を抽出してDBに登録する
 
         Args:
             webpage_text_past (str): 「過去の災害」の文字列
-            analayze_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to the current date and time.
+            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
         session: Session = database_manager.SESSION()
 
         try:
+            # execute_dt の指定状況に応じ、登録する情報を決定する
+            retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
+            notify_stat = (
+                NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
+            )
+
             # 災害情報の文字列を検索する
             matches = re.findall(
                 r"<span>(\d{2}月\d{2}日.+?。)</span>", webpage_text_past
@@ -230,8 +245,9 @@ class FwdNagaoka:
                     # 登録する情報を作成する
                     raw_text_data = NagaokaRawText(
                         raw_text=match_str,
+                        retr_dt=retrieve_dt,
                         text_pos=TextPosition.PAST,
-                        retr_dt=analayze_dt,
+                        notify_status=notify_stat,
                     )
                     session.add(raw_text_data)
 
@@ -249,13 +265,9 @@ class FwdNagaoka:
         finally:
             session.close()
 
-    def _analyze(self, analyze_dt=datetime.datetime.now(), old_data=False):
-        """災害文字列の解析を実行する
+    def _analyze(self):
+        """災害文字列の解析を実行する"""
 
-        Args:
-            analyze_dt (datetime.datetime, optional): 解析を実行する日時情報. Defaults to datetime.datetime.now().
-            old_data (bool, optional): 過去の災害情報かを表すフラグ. Defaults to False.
-        """
         session: Session = database_manager.SESSION()
 
         try:
@@ -269,14 +281,10 @@ class FwdNagaoka:
             # 分析処理を実行する
             for raw_text_data in not_analyzed_list:
                 self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理開始")
-                detail_data = self._analyze_text(raw_text_data, analyze_dt)
+                detail_data = self._analyze_text(raw_text_data)
 
                 # statusが「終了」の場合は通知不要を設定する
                 if detail_data.status == DisasterStatus.終了:
-                    raw_text_data.notify_status = NotifyStatus.SKIPPED
-
-                # 過去の災害情報を処理した場合は通知不要を設定する
-                if old_data:
                     raw_text_data.notify_status = NotifyStatus.SKIPPED
 
                 # 分析結果をDBに送信しコミットする
@@ -292,14 +300,11 @@ class FwdNagaoka:
         finally:
             session.close()
 
-    def _analyze_text(
-        self, raw_text_data: NagaokaRawText, analyze_dt: datetime.datetime
-    ) -> NagaokaDisasterDetail:
+    def _analyze_text(self, raw_text_data: NagaokaRawText) -> NagaokaDisasterDetail:
         """災害文字列の解析ロジック
 
         Args:
             raw_text_data (NagaokaRawText): 解析対象の災害情報
-            analyze_dt (datetime.datetime): 解析を実行する日時情報
 
         Raises:
             ValueError: 解析処理に失敗した場合
@@ -326,8 +331,8 @@ class FwdNagaoka:
             # 基本的にはanalyze_dt の年を設定するが、
             # analyze_dt.month < m_1st.month の場合は前年と判定して
             # analyze_dt.year - 1 を設定する
-            open_year = analyze_dt.year
-            if analyze_dt.month < int(m_1st.group("month")):
+            open_year = raw_text_data.retr_dt.year
+            if raw_text_data.retr_dt.month < int(m_1st.group("month")):
                 open_year -= 1
 
             # 災害発生時刻を決定する
