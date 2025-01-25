@@ -4,6 +4,8 @@ from pathlib import Path
 from fwdnagaoka.fwd_nagaoka import FwdNagaoka
 from fwdutil import logger_initializer
 
+LOGCONFIG_FILE_PATH = Path(__file__).parents[2] / "config" / "fwd_log_format.yaml"
+
 
 def create_config_file(args):
     pass
@@ -14,15 +16,13 @@ def setup_fwd(args):
 
 
 def execute_nagaoka(args):
-    logconfig_file_path = Path(__file__).parents[2] / "config" / "log_format.yaml"
-    logger_initializer.initialize(logconfig_file_path)
+    logger_initializer.initialize(LOGCONFIG_FILE_PATH)
     fwd_nagaoka = FwdNagaoka()
     fwd_nagaoka.execute()
 
 
 def store_old_nagaoka(args):
-    logconfig_file_path = Path(__file__).parents[2] / "config" / "log_format.yaml"
-    logger_initializer.initialize(logconfig_file_path)
+    logger_initializer.initialize(LOGCONFIG_FILE_PATH)
     fwdNagaoka = FwdNagaoka()
     fwdNagaoka.store_old_data(args.text_dir)
 

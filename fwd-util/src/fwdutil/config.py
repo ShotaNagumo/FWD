@@ -3,7 +3,7 @@ from pathlib import Path
 import yaml
 
 # 設定ファイルパス
-CONFIGFILE_PATH = Path(__file__).parents[3] / "config" / "fwd-config.yaml"
+CONFIGFILE_PATH = Path(__file__).parents[3] / "config" / "fwd_config.yaml"
 
 # 設定ファイルデータ（ファイルI/O削減のためキャッシュする）
 SETTING_DATA = None
