@@ -1,0 +1,86 @@
+version: 1
+
+formatters:
+  std_format:
+    format: '%(asctime)s [PID:%(process)d] [%(filename)s:%(lineno)s] [%(levelname)s] %(message)s'
+
+handlers:
+  # 長岡市ログ用
+  file_out_nagaoka:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: INFO
+    formatter: std_format
+    filename: {{ variable_dir }}/log/nagaoka.log
+    when: MIDNIGHT
+    backupCount: 31
+    encoding: utf-8
+  file_out_nagaoka_debug:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: DEBUG
+    formatter: std_format
+    filename: {{ variable_dir }}/log/nagaoka.debug.log
+    when: MIDNIGHT
+    backupCount: 5
+    encoding: utf-8
+  # 新潟市ログ用
+  file_out_niigata:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: INFO
+    formatter: std_format
+    filename: {{ variable_dir }}/log/niigata.log
+    when: MIDNIGHT
+    backupCount: 31
+    encoding: utf-8
+  file_out_niigata_debug:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: DEBUG
+    formatter: std_format
+    filename: {{ variable_dir }}/log/niigata.debug.log
+    when: MIDNIGHT
+    backupCount: 5
+    encoding: utf-8
+  # SQLAlchemyログ用
+  file_out_sqlalchemy:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: DEBUG
+    formatter: std_format
+    filename: {{ variable_dir }}/log/database.log
+    when: MIDNIGHT
+    backupCount: 31
+    encoding: utf-8
+  # requestsモジュールによるGET/POST記録
+  file_out_requests:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: INFO
+    formatter: std_format
+    filename: {{ variable_dir }}/log/requests.log
+    when: MIDNIGHT
+    backupCount: 31
+    encoding: utf-8
+  # コンソール出力用（通常は使用しないがhandlersに設定できるよう定義しておく）
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: std_format
+
+loggers:
+  fwd.nagaoka:
+    level: DEBUG
+    handlers: [file_out_nagaoka, file_out_nagaoka_debug]
+    propagate: no
+  fwd.niigata:
+    level: DEBUG
+    handlers: [file_out_niigata, file_out_niigata_debug]
+    propagate: no
+  sqlalchemy.engine:
+    level: DEBUG
+    handlers: [file_out_sqlalchemy]
+    propagate: yes
+  requests:
+    level: DEBUG
+    handlers: [file_out_requests]
+    propagate: yes
+
+root:
+  level: INFO
+  handlers: []
