@@ -4,7 +4,9 @@ from pathlib import Path
 from fwdnagaoka.fwd_nagaoka import FwdNagaoka
 from fwdutil import logger_initializer
 
-LOGCONFIG_FILE_PATH = Path(__file__).parents[2] / "config" / "fwd_log_format.yaml"
+CONFIG_DIR = Path(__file__).parents[2] / "config"
+CONFIG_FILE_PATH = CONFIG_DIR / "fwd_config.yaml"
+LOG_FORMAT_FILE_PATH = CONFIG_DIR / "fwd_log_format.yaml"
 
 
 def create_config_file(args):
@@ -16,13 +18,13 @@ def setup_fwd(args):
 
 
 def execute_nagaoka(args):
-    logger_initializer.initialize(LOGCONFIG_FILE_PATH)
+    logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwd_nagaoka = FwdNagaoka()
     fwd_nagaoka.execute()
 
 
 def store_old_nagaoka(args):
-    logger_initializer.initialize(LOGCONFIG_FILE_PATH)
+    logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwdNagaoka = FwdNagaoka()
     fwdNagaoka.store_old_data(args.text_dir)
 
@@ -53,11 +55,7 @@ def _create_argparser() -> argparse.ArgumentParser:
     return argparser
 
 
-def main():
+if __name__ == "__main__":
     argparser = _create_argparser()
     args = argparser.parse_args()
     args.func(args)
-
-
-if __name__ == "__main__":
-    main()
