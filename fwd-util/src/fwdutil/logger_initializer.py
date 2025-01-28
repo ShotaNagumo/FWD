@@ -7,7 +7,9 @@ import yaml
 def initialize(logger_config_file: Path):
     try:
         # ログ設定ファイルから情報を読みだす
-        setting_data: dict = yaml.safe_load(logger_config_file.read_text())
+        setting_data: dict = yaml.safe_load(
+            logger_config_file.read_text(encoding="utf-8")
+        )
 
         # ファイルに出力するhandlerがある場合は、そのファイルが入るディレクトリを作成する
         # このディレクトリ作成処理は、config.dictConfig()よりも前に行う必要がある。

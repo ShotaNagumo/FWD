@@ -23,7 +23,7 @@ def get_variable_dir() -> Path:
     # 設定ファイルデータが読み込まれていない場合、データを読み出す
     global SETTING_DATA
     if SETTING_DATA is None:
-        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text())
+        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text(encoding="utf-8"))
 
     # 読み出したデータをPathに変換する
     if not (variable_dir := SETTING_DATA.get("variable_dir")):
@@ -52,7 +52,7 @@ def get_webhook_url(city_name: str) -> str:
     # 設定ファイルデータが読み込まれていない場合、データを読み出す
     global SETTING_DATA
     if SETTING_DATA is None:
-        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text())
+        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text(encoding="utf-8"))
 
     # Webhook URLを取得する
     if not SETTING_DATA.get(city_name):
