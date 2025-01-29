@@ -1,8 +1,7 @@
 import argparse
 from pathlib import Path
 
-from fwdnagaoka.fwd_nagaoka import FwdNagaoka
-from fwdutil import logger_initializer
+from jinja2 import Environment, FileSystemLoader
 
 CONFIG_DIR = Path(__file__).parents[2] / "config"
 CONFIG_FILE_PATH = CONFIG_DIR / "fwd_config.yaml"
@@ -10,20 +9,53 @@ LOG_FORMAT_FILE_PATH = CONFIG_DIR / "fwd_log_format.yaml"
 
 
 def create_config_file(args):
-    pass
+    # Jinja2設定
+    _template_dir = Path(__file__).parents[1] / "resource" / "template"
+    _j2_env = Environment(loader=FileSystemLoader(_template_dir))
+
+    # 設定する値を読み取り
+    data = {}
+    data["variable_dir"] = input("variable_dir: ")
+    data["nagaoka_webhook_url"] = input("webhook_url(nagaoka): ")
+
+    # 設定ファイルを作成する
+    fwd_config_template = _j2_env.get_template("fwd_config.j2")
+    fwd_config_data = fwd_config_template.render(data)
+    CONFIG_FILE_PATH.write_text(fwd_config_data, encoding="utf-8")
+    print(f'Generated config file: "{CONFIG_FILE_PATH}"')
+
+    # ログフォーマットファイルを作成する
+    fwd_log_format_template = _j2_env.get_template("fwd_log_format.j2")
+    fwd_log_format_data = fwd_log_format_template.render(data)
+    LOG_FORMAT_FILE_PATH.write_text(fwd_log_format_data, encoding="utf-8")
+    print(f'Generated log_format file: "{LOG_FORMAT_FILE_PATH}"')
 
 
 def setup_fwd(args):
+    # 設定ファイル未作成の状態でlauncher実行した場合に
+    # エラーとなることを防ぐためここでインポート
+    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
+
     FwdNagaoka.setup()
 
 
 def execute_nagaoka(args):
+    # 設定ファイル未作成の状態でlauncher実行した場合に
+    # エラーとなることを防ぐためここでインポート
+    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
+    from fwdutil import logger_initializer
+
     logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwd_nagaoka = FwdNagaoka()
     fwd_nagaoka.execute()
 
 
 def store_old_nagaoka(args):
+    # 設定ファイル未作成の状態でlauncher実行した場合に
+    # エラーとなることを防ぐためここでインポート
+    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
+    from fwdutil import logger_initializer
+
     logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwdNagaoka = FwdNagaoka()
     fwdNagaoka.store_old_data(args.text_dir)
