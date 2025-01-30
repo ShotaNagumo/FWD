@@ -5,6 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fwdnagaoka"
 version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy^=2.0.36",
+    "jinja2^=3.1.4",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
