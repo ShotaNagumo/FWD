@@ -1,0 +1,12 @@
+[project]
+name = "fwd"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jinja2>=3.1.5",
+    "requests>=2.32.3",
+    "sqlalchemy[all]>=2.0.37",
+    "yamllib>=0.0.1",
+]
