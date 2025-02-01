@@ -10,3 +10,8 @@ dependencies = [
     "sqlalchemy[all]>=2.0.37",
     "yamllib>=0.0.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
