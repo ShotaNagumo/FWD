@@ -34,16 +34,19 @@ def create_config_file(args):
 def setup_fwd(args):
     # 設定ファイル未作成の状態でlauncher実行した場合に
     # エラーとなることを防ぐためここでインポート
-    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
+    from fwd.src import logger_initializer
+    from fwd.src.nagaoka.fwd_nagaoka import FwdNagaoka
 
+    logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     FwdNagaoka.setup()
 
 
 def execute_nagaoka(args):
     # 設定ファイル未作成の状態でlauncher実行した場合に
     # エラーとなることを防ぐためここでインポート
-    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
-    from fwdutil import logger_initializer
+    from nagaoka.fwd_nagaoka import FwdNagaoka
+
+    from fwd.src import logger_initializer
 
     logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwd_nagaoka = FwdNagaoka()
@@ -53,8 +56,8 @@ def execute_nagaoka(args):
 def store_old_nagaoka(args):
     # 設定ファイル未作成の状態でlauncher実行した場合に
     # エラーとなることを防ぐためここでインポート
-    from fwdnagaoka.fwd_nagaoka import FwdNagaoka
-    from fwdutil import logger_initializer
+    import logger_initializer
+    from fwd_nagaoka import FwdNagaoka
 
     logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwdNagaoka = FwdNagaoka()
@@ -88,6 +91,10 @@ def _create_argparser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
+    import sys
+
+    for s in sys.path:
+        print(s)
     argparser = _create_argparser()
     args = argparser.parse_args()
     args.func(args)
