@@ -28,7 +28,7 @@ class FwdNagaoka:
     def __init__(self):
         """コンストラクタ"""
         self._logger = logging.getLogger("fwd.nagaoka")
-        _template_dir = Path(__file__).parents[2] / "resource" / "template"
+        _template_dir = util_config.get_resource_dir() / "nagaoka" / "template"
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
         self._webhook_url = util_config.get_webhook_url("nagaoka")
 

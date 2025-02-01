@@ -2,9 +2,6 @@ from pathlib import Path
 
 import yaml
 
-# 設定ファイルパス
-CONFIGFILE_PATH = Path(__file__).parents[3] / "config" / "fwd_config.yaml"
-
 # 設定ファイルデータ（ファイルI/O削減のためキャッシュする）
 SETTING_DATA = None
 
@@ -23,7 +20,8 @@ def get_variable_dir() -> Path:
     # 設定ファイルデータが読み込まれていない場合、データを読み出す
     global SETTING_DATA
     if SETTING_DATA is None:
-        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text(encoding="utf-8"))
+        config_file_path = get_config_dir() / "fwd_config.yaml"
+        SETTING_DATA = yaml.safe_load(config_file_path.read_text(encoding="utf-8"))
 
     # 読み出したデータをPathに変換する
     if not (variable_dir := SETTING_DATA.get("variable_dir")):
@@ -33,6 +31,16 @@ def get_variable_dir() -> Path:
         return variable_path
     except Exception:
         raise ValueError("variable_dir不正")
+
+
+def get_config_dir() -> Path:
+    """設定ファイルが保存されているディレクトリを取得する"""
+    return Path(__file__).parents[1] / "config"
+
+
+def get_resource_dir() -> Path:
+    """リソースファイルが保存されているディレクトリを取得する"""
+    return Path(__file__).parents[1] / "resource"
 
 
 def get_webhook_url(city_name: str) -> str:
@@ -52,7 +60,8 @@ def get_webhook_url(city_name: str) -> str:
     # 設定ファイルデータが読み込まれていない場合、データを読み出す
     global SETTING_DATA
     if SETTING_DATA is None:
-        SETTING_DATA = yaml.safe_load(CONFIGFILE_PATH.read_text(encoding="utf-8"))
+        config_file_path = get_config_dir() / "fwd_config.yaml"
+        SETTING_DATA = yaml.safe_load(config_file_path.read_text(encoding="utf-8"))
 
     # Webhook URLを取得する
     if not SETTING_DATA.get(city_name):

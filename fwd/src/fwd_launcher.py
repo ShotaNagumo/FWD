@@ -1,16 +1,15 @@
 import argparse
-from pathlib import Path
 
+import util_config
 from jinja2 import Environment, FileSystemLoader
 
-CONFIG_DIR = Path(__file__).parents[2] / "config"
-CONFIG_FILE_PATH = CONFIG_DIR / "fwd_config.yaml"
-LOG_FORMAT_FILE_PATH = CONFIG_DIR / "fwd_log_format.yaml"
+CONFIG_FILE_PATH = util_config.get_config_dir() / "fwd_config.yaml"
+LOG_FORMAT_FILE_PATH = util_config.get_config_dir() / "fwd_log_format.yaml"
 
 
 def create_config_file(args):
     # Jinja2設定
-    _template_dir = Path(__file__).parents[1] / "resource" / "template"
+    _template_dir = util_config.get_resource_dir() / "launcher" / "template"
     _j2_env = Environment(loader=FileSystemLoader(_template_dir))
 
     # 設定する値を読み取り
