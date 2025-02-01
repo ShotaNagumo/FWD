@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Final, Optional
 
 import sqlalchemy
-from fwdutil import config, database_manager, request_wrapper
+import util_config
+import util_db_manager
+import util_request_wrapper
 from jinja2 import Environment, FileSystemLoader
-from sqlalchemy.orm.session import Session
-
-from fwdnagaoka.datamodel import (
+from nagaoka_datamodel import (
     DisasterMainCategory,
     DisasterStatus,
     NagaokaDisasterDetail,
@@ -18,6 +18,7 @@ from fwdnagaoka.datamodel import (
     TextPosition,
     create_table_all,
 )
+from sqlalchemy.orm.session import Session
 
 
 class FwdNagaoka:
@@ -29,7 +30,7 @@ class FwdNagaoka:
         self._logger = logging.getLogger("fwd.nagaoka")
         _template_dir = Path(__file__).parents[2] / "resource" / "template"
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
-        self._webhook_url = config.get_webhook_url("nagaoka")
+        self._webhook_url = util_config.get_webhook_url("nagaoka")
 
     @staticmethod
     def setup():
@@ -41,7 +42,7 @@ class FwdNagaoka:
         try:
             self._logger.info("execute() 実行開始")
             # Webから災害情報テキストを取得
-            webpage_text = request_wrapper.download_webpage(
+            webpage_text = util_request_wrapper.download_webpage(
                 FwdNagaoka.WEBPAGE_URL, FwdNagaoka.WEBPAGE_ENC
             )
 
@@ -162,7 +163,7 @@ class FwdNagaoka:
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
 
-        session: Session = database_manager.SESSION()
+        session: Session = util_db_manager.SESSION()
 
         # 災害情報の文字列を検索する
         try:
@@ -219,7 +220,7 @@ class FwdNagaoka:
             webpage_text_past (str): 「過去の災害」の文字列
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
-        session: Session = database_manager.SESSION()
+        session: Session = util_db_manager.SESSION()
 
         try:
             # execute_dt の指定状況に応じ、登録する情報を決定する
@@ -268,7 +269,7 @@ class FwdNagaoka:
     def _analyze(self):
         """災害文字列の解析を実行する"""
 
-        session: Session = database_manager.SESSION()
+        session: Session = util_db_manager.SESSION()
 
         try:
             # 分析対象のNagaokaRawText一覧をDBから取得する
@@ -456,7 +457,7 @@ class FwdNagaoka:
 
     def _notify(self):
         """通知処理を実行する"""
-        session: Session = database_manager.SESSION()
+        session: Session = util_db_manager.SESSION()
 
         try:
             # 通知が必要な災害情報を検索する
@@ -471,7 +472,7 @@ class FwdNagaoka:
                 # 通知文の作成
                 notify_text = self._create_notify_text(raw_text_data.detail_info)
                 # 通知の実行
-                request_wrapper.post_to_discord(self._webhook_url, notify_text)
+                util_request_wrapper.post_to_discord(self._webhook_url, notify_text)
                 # 状態を通知済みに更新
                 raw_text_data.notify_status = NotifyStatus.NOTIFIED
                 session.commit()

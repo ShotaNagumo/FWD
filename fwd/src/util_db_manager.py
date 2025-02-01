@@ -1,15 +1,14 @@
 from contextlib import contextmanager
 from typing import Final
 
+import util_config
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
-from fwdutil import config
-
 # データベースファイルパスを決定
-variable_dir = config.get_variable_dir()
+variable_dir = util_config.get_variable_dir()
 db_filepath = variable_dir / "database" / "fwd.db"
 db_filepath.parent.mkdir(exist_ok=True)
 

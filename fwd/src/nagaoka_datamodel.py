@@ -2,7 +2,7 @@ import datetime
 from enum import Enum, auto
 
 import sqlalchemy
-from fwdutil import database_manager
+import util_db_manager
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -11,7 +11,7 @@ Base = declarative_base()
 
 
 def create_table_all():
-    Base.metadata.create_all(bind=database_manager.ENGINE)
+    Base.metadata.create_all(bind=util_db_manager.ENGINE)
 
 
 class DatabaseInfo(Base):
