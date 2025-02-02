@@ -33,16 +33,16 @@ def download_webpage(webpage_url: str, webpage_enc: str, timeout_sec=10) -> str:
         return text_data
 
     except requests.ConnectionError:
-        logger.error(f"Download FAILED. ConnectionError, Status={res.status_code}.")
+        logger.error("Download FAILED. ConnectionError")
         raise
     except requests.HTTPError:
-        logger.error(f"Download FAILED. HTTPError, Status={res.status_code}.")
+        logger.error("Download FAILED. HTTPError")
         raise
     except requests.Timeout:
-        logger.error(f"Download FAILED. Timeout, Status={res.status_code}.")
+        logger.error("Download FAILED. Timeout")
         raise
     except requests.RequestException:
-        logger.error(f"Download FAILED. RequestException, Status={res.status_code}.")
+        logger.error("Download FAILED. RequestException.")
         raise
 
 
@@ -67,14 +67,14 @@ def post_to_discord(webhook_url: str, message: str, timeout_sec=10):
         logger.info(f"Post SUCCEED. Status={res.status_code}.")
 
     except requests.ConnectionError:
-        logger.error(f"Post FAILED. ConnectionError, Status={res.status_code}.")
+        logger.error("Post FAILED. ConnectionError")
         raise
     except requests.HTTPError:
-        logger.error(f"Post FAILED. HTTPError, Status={res.status_code}.")
+        logger.error("Post FAILED. HTTPError")
         raise
     except requests.Timeout:
-        logger.error(f"Post FAILED. Timeout, Status={res.status_code}.")
+        logger.error("Post FAILED. Timeout")
         raise
     except requests.RequestException:
-        logger.error(f"Post FAILED. RequestException, Status={res.status_code}.")
+        logger.error("Post FAILED. RequestException")
         raise
