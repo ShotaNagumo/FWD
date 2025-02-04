@@ -18,7 +18,7 @@ def initialize(logger_config_file: Path):
             if file_name := handlers[handler_name].get("filename", None):
                 log_out_dir = Path(file_name).parent
                 if not log_out_dir.exists():
-                    log_out_dir.mkdir()
+                    log_out_dir.mkdir(parents=True)
 
         # ログ設定情報をloggingモジュールに設定する
         config.dictConfig(setting_data)

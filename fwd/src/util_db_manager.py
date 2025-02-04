@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 # データベースファイルパスを決定
 variable_dir = util_config.get_variable_dir()
 db_filepath = variable_dir / "database" / "fwd.db"
-db_filepath.parent.mkdir(exist_ok=True)
+db_filepath.parent.mkdir(exist_ok=True, parents=True)
 
 # Engine, Session設定
 UB_URL: Final[str] = f"sqlite:///{db_filepath.as_posix()}"
