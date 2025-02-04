@@ -60,8 +60,8 @@ def get_webhook_url(city_name: str) -> str:
         SETTING_DATA = yaml.safe_load(config_file_path.read_text(encoding="utf-8"))
 
     # Webhook URLを取得する
-    if not SETTING_DATA.get(city_name):
+    if SETTING_DATA.get(city_name, None) is None:
         raise ValueError("指定した都市名の設定ブロック未定義")
-    if not (webhook_url := SETTING_DATA.get(city_name).get("webhook_url")):
+    if (webhook_url := SETTING_DATA.get(city_name).get("webhook_url", None)) is None:
         raise ValueError("webhook_url未定義")
     return webhook_url
