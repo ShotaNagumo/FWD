@@ -11,7 +11,6 @@ def get_variable_dir() -> Path:
 
     Raises:
         ValueError: variable_dir未定義
-        ValueError: variable_dirがディレクトリパスとして不正
 
     Returns:
         Path: Variableディレクトリのパス
@@ -26,11 +25,8 @@ def get_variable_dir() -> Path:
     # 読み出したデータをPathに変換する
     if not (variable_dir := SETTING_DATA.get("variable_dir")):
         raise ValueError("variable_dir未定義")
-    try:
-        variable_path = Path(variable_dir)
-        return variable_path
-    except Exception:
-        raise ValueError("variable_dir不正")
+    variable_path = Path(variable_dir)
+    return variable_path
 
 
 def get_config_dir() -> Path:
