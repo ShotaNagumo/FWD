@@ -1,10 +1,8 @@
-from contextlib import contextmanager
 from typing import Final
 
 import util_config
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
 # データベースファイルパスを決定
@@ -16,21 +14,6 @@ db_filepath.parent.mkdir(exist_ok=True, parents=True)
 UB_URL: Final[str] = f"sqlite:///{db_filepath.as_posix()}"
 ENGINE = create_engine(UB_URL, echo=True)
 SESSION = sessionmaker(autocommit=False, autoflush=False, bind=ENGINE)
-
-
-# sessionを取得する関数
-@contextmanager
-def session_factory():
-    session = SESSION()
-    try:
-        yield session
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise
-    except Exception:
-        session.rollback()
-        raise
 
 
 # sqlite 外部キー制約を強制するpragma
