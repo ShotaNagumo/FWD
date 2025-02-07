@@ -15,6 +15,8 @@ sys.path.append(src_path.as_posix())
 import util_config
 from nagaoka_main import FwdNagaoka
 
+TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
+
 
 @pytest.fixture(scope="class")
 def setup_setting():
@@ -28,11 +30,7 @@ def setup_setting():
     util_config.SETTING_DATA = setting_data
 
     # 設定ファイルパス
-    setting_file_path = (
-        Path(__file__).parents[1]
-        / "tests_resource"
-        / "test_util_logger_initializer_1.yaml"
-    )
+    setting_file_path = TEST_RESOURCE_DIR / "test_util_logger_initializer_1.yaml"
 
     # logger初期化
     initialize(setting_file_path)
@@ -64,3 +62,31 @@ class TestNagaokaMain:
         )
         output_text = instance._cleansing_webtext(input_text)
         assert expected_text == output_text
+
+    def test_split_webtext(self, setup_setting):
+        instance = FwdNagaoka()
+
+        # テスト入力ファイル
+        input_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1.txt"
+        input_data = instance._cleansing_webtext(input_path.read_text(encoding="utf-8"))
+
+        # 期待値データファイルを読み込み
+        expected_curr_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_curr.txt"
+        expected_curr_data = expected_curr_path.read_text(encoding="utf-8")
+        expected_past_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_past.txt"
+        expected_past_data = expected_past_path.read_text(encoding="utf-8")
+
+        # テスト対象関数を実行
+        output_curr, output_past = instance._split_webtext(input_data)
+
+        # テスト結果を評価
+        assert expected_curr_data == output_curr
+        assert expected_past_data == output_past
+
+    def test_split_webtext_exception(self, setup_setting):
+        instance = FwdNagaoka()
+        with pytest.raises(ValueError):
+            instance._split_webtext("dummy")
+
+    def test_get_close_dt(self, setup_setting):
+        pass
