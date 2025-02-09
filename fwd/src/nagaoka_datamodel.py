@@ -4,10 +4,9 @@ from enum import Enum, auto
 import sqlalchemy
 import util_db_manager
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 
 
 def create_table_all():
