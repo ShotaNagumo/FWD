@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Final, Optional
 
+import nagaoka_datamodel
 import sqlalchemy
 import util_config
 import util_db_manager
@@ -16,7 +17,6 @@ from nagaoka_datamodel import (
     NagaokaRawText,
     NotifyStatus,
     TextPosition,
-    create_table_all,
 )
 from sqlalchemy.orm.session import Session
 
@@ -35,7 +35,7 @@ class FwdNagaoka:
     @staticmethod
     def setup():
         """テーブルを作成する"""
-        create_table_all()
+        nagaoka_datamodel.create_table_all()
 
     def execute(self):
         """災害情報の取得から通知までの一連の処理を実行する"""
