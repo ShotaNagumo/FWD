@@ -53,6 +53,22 @@ def setup_logger():
                 shutil.rmtree(log_out_dir)
 
 
+@pytest.fixture(scope="function")
+def setup_db():
+    # DB初期化
+    FwdNagaoka.setup()
+
+    # テスト実行
+    yield
+
+    # DB停止
+    util_db_manager.ENGINE.dispose()
+
+    # DB削除
+    db_dir = Path("./variable_nagaoka")
+    shutil.rmtree(db_dir)
+
+
 class TestNagaokaMain:
     def test_cleansing_webtext(self, mocker: MockFixture, setup_logger):
         instance = FwdNagaoka()
@@ -92,3 +108,6 @@ class TestNagaokaMain:
 
     def test_get_close_dt(self, setup_logger):
         pass
+
+    def test_xxx(self, setup_logger, setup_db):
+        assert True
