@@ -7,33 +7,35 @@ import pytest
 import yaml
 from pytest_mock import MockFixture
 
-from fwd.src.util_logger_initializer import initialize
-
 src_path = Path(__file__).parents[1] / "src"
 sys.path.append(src_path.as_posix())
 
 import util_config
+
+# 設定内容を更新（FwdNagaokaをインポートする前に実行する必要がある）
+setting_data = {
+    "variable_dir": "./variable_nagaoka",
+    "nagaoka": {
+        "webhook_url": "https://discord.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz",
+    },
+}
+util_config.SETTING_DATA = setting_data
+
+# 自作モジュールの読み込み（設定データ更新後にインポートする）
+import util_db_manager
+import util_logger_initializer
 from nagaoka_main import FwdNagaoka
 
 TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
 
 
 @pytest.fixture(scope="class")
-def setup_setting():
-    # 設定内容を更新
-    setting_data = {
-        "variable_dir": "./variable",
-        "nagaoka": {
-            "webhook_url": "https://discord.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz",
-        },
-    }
-    util_config.SETTING_DATA = setting_data
-
-    # 設定ファイルパス
+def setup_logger():
+    # ログフォーマットファイルパス
     setting_file_path = TEST_RESOURCE_DIR / "test_util_logger_initializer_1.yaml"
 
     # logger初期化
-    initialize(setting_file_path)
+    util_logger_initializer.initialize(setting_file_path)
 
     # テスト実行
     yield
@@ -52,7 +54,7 @@ def setup_setting():
 
 
 class TestNagaokaMain:
-    def test_cleansing_webtext(self, mocker: MockFixture, setup_setting):
+    def test_cleansing_webtext(self, mocker: MockFixture, setup_logger):
         instance = FwdNagaoka()
         input_text = (
             "12月23日　01:23　長岡市 町名 ２丁目に建物火災のため消防車が出動しました。"
@@ -63,7 +65,7 @@ class TestNagaokaMain:
         output_text = instance._cleansing_webtext(input_text)
         assert expected_text == output_text
 
-    def test_split_webtext(self, setup_setting):
+    def test_split_webtext(self, setup_logger):
         instance = FwdNagaoka()
 
         # テスト入力ファイル
@@ -83,10 +85,10 @@ class TestNagaokaMain:
         assert expected_curr_data == output_curr
         assert expected_past_data == output_past
 
-    def test_split_webtext_exception(self, setup_setting):
+    def test_split_webtext_exception(self, setup_logger):
         instance = FwdNagaoka()
         with pytest.raises(ValueError):
             instance._split_webtext("dummy")
 
-    def test_get_close_dt(self, setup_setting):
+    def test_get_close_dt(self, setup_logger):
         pass

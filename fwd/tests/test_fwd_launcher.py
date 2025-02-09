@@ -22,7 +22,7 @@ class TestFwdLauncher:
     def test_setup_fwd(self, mocker: MockFixture):
         # 設定データをテスト用に上書き
         setting_data = {
-            "variable_dir": "./variable",
+            "variable_dir": "./variable_launcher",
             "nagaoka": {
                 "webhook_url": "https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz"
             },
