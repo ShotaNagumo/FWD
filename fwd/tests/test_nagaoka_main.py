@@ -1,3 +1,4 @@
+import datetime
 import logging
 import shutil
 import sys
@@ -114,5 +115,55 @@ class TestNagaokaMain:
         assert True
 
     def test_create_notify_text(self, mocker: MockFixture, setup_logger):
+        pass
+        # instance = FwdNagaoka()
+        # input_data = nagaoka_datamodel.NagaokaDisasterDetail()
+        # mocker.patch(
+        #     "nagaoka_main.FwdNagaoka._create_data_for_create_notify_text",
+        #     return_value={},
+        # )
+        # mocker.patch("jinja2.environment.Template.render", return_value="rendered_text")
+        # rendered_text = instance._create_notify_text(input_data)
+        # assert "rendered_text" == rendered_text
+
+    def test_create_data_for_create_notify_text(self, setup_logger):
         instance = FwdNagaoka()
+
+        _open_dt = datetime.datetime.now()
+        _close_dt = datetime.datetime.now()
+
+        # 入力値
         input_data = nagaoka_datamodel.NagaokaDisasterDetail()
+        input_data.raw_text_id = 1
+        input_data.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        input_data.sub_category = "建物火災"
+        input_data.open_dt = _open_dt
+        input_data.status = nagaoka_datamodel.DisasterStatus.発生
+        input_data.address1 = "長岡市"
+        input_data.address2 = "町名"
+        input_data.address3 = "N丁目"
+        input_data.close_dt = None
+
+        # 期待値
+        expected_data = {
+            "main_category": "火災",
+            "sub_category": "建物火災",
+            "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
+            "status": "発生",
+            "address1": "長岡市",
+            "address2": "町名",
+            "address3": "N丁目",
+            "close_dt": "",
+        }
+
+        # テスト（close_dt有の場合）
+        output_data = instance._create_data_for_create_notify_text(input_data)
+        assert expected_data == output_data
+
+        # 入力値・期待値にclose_dtを追加
+        input_data.close_dt = _close_dt
+        expected_data["close_dt"] = _close_dt.strftime(r"%Y/%m/%d %H:%M")
+
+        # テスト（close_dt無の場合）
+        output_data = instance._create_data_for_create_notify_text(input_data)
+        assert expected_data == output_data
