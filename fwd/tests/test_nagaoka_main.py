@@ -22,6 +22,7 @@ setting_data = {
 util_config.SETTING_DATA = setting_data
 
 # 自作モジュールの読み込み（設定データ更新後にインポートする）
+import nagaoka_datamodel
 import util_db_manager
 import util_logger_initializer
 from nagaoka_main import FwdNagaoka
@@ -111,3 +112,7 @@ class TestNagaokaMain:
 
     def test_xxx(self, setup_logger, setup_db):
         assert True
+
+    def test_create_notify_text(self, mocker: MockFixture, setup_logger):
+        instance = FwdNagaoka()
+        input_data = nagaoka_datamodel.NagaokaDisasterDetail()
