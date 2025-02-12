@@ -195,6 +195,13 @@ class TestNagaokaMain:
         # テスト（住所2）
         rendered_text = instance._create_notify_text(input_data)
 
+    def test_create_notify_text_exception(self, mocker: MockFixture, setup_logger):
+        instance = FwdNagaoka()
+        with mocker.patch("jinja2.environment.Template.render", side_effect=Exception):
+            input_data = nagaoka_datamodel.NagaokaDisasterDetail()
+            with pytest.raises(Exception):
+                instance._create_notify_text(input_data)
+
     def test_create_data_for_create_notify_text(self, setup_logger):
         instance = FwdNagaoka()
 
