@@ -1,0 +1,4 @@
+[report]
+omit = 
+    fwd\resource\nagaoka\template\notify_base.j2
+    fwd\resource\nagaoka\template\notify.j2
