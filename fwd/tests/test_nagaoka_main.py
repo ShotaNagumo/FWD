@@ -115,16 +115,85 @@ class TestNagaokaMain:
         assert True
 
     def test_create_notify_text(self, mocker: MockFixture, setup_logger):
-        pass
-        # instance = FwdNagaoka()
-        # input_data = nagaoka_datamodel.NagaokaDisasterDetail()
-        # mocker.patch(
-        #     "nagaoka_main.FwdNagaoka._create_data_for_create_notify_text",
-        #     return_value={},
-        # )
-        # mocker.patch("jinja2.environment.Template.render", return_value="rendered_text")
-        # rendered_text = instance._create_notify_text(input_data)
-        # assert "rendered_text" == rendered_text
+        instance = FwdNagaoka()
+
+        # 入力値（発生系）
+        input_data = nagaoka_datamodel.NagaokaDisasterDetail()
+        input_data.raw_text_id = 1
+        input_data.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        input_data.sub_category = "建物火災"
+        input_data.open_dt = datetime.datetime(2025, 1, 23, 1, 59)
+        input_data.status = nagaoka_datamodel.DisasterStatus.発生
+        input_data.address1 = ""
+        input_data.address2 = "町名"
+        input_data.address3 = "N丁目"
+        input_data.close_dt = None
+
+        # 期待値（発生系）
+        expected_data = (
+            "[長岡消防] 【火災】 町名 N丁目\n"
+            "災害詳細：建物火災\n"
+            "発生日時：2025/01/23 01:59"
+        )
+
+        # テスト（発生系）
+        rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
+
+        # 入力値（終了系）
+        input_data.status = nagaoka_datamodel.DisasterStatus.鎮火
+        input_data.close_dt = datetime.datetime(2025, 1, 23, 2, 59)
+
+        # 期待値（終了系）
+        expected_data = (
+            "[長岡消防] 【鎮火】 町名 N丁目\n"
+            "災害詳細：建物火災\n"
+            "終了日時：2025/01/23 02:59 （発生日時：2025/01/23 01:59）"
+        )
+
+        # テスト（終了系）
+        rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
+
+        # 入力値（住所1, 2, 3）
+        input_data.address1 = "市町村名"
+        input_data.status = nagaoka_datamodel.DisasterStatus.発生
+        input_data.close_dt = None
+
+        # 期待値（住所1, 2, 3）
+        expected_data = (
+            "[長岡消防] 【火災】 市町村名 町名 N丁目\n"
+            "災害詳細：建物火災\n"
+            "発生日時：2025/01/23 01:59"
+        )
+
+        # テスト（住所1, 2, 3）
+        rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
+
+        # 入力値（住所1, 2）
+        input_data.address3 = None
+
+        # 期待値（住所1, 2）
+        expected_data = (
+            "[長岡消防] 【火災】 市町村名 町名\n"
+            "災害詳細：建物火災\n"
+            "発生日時：2025/01/23 01:59"
+        )
+
+        # テスト（住所1, 2）
+        rendered_text = instance._create_notify_text(input_data)
+
+        # 入力値（住所2）
+        input_data.address1 = None
+
+        # 期待値（住所2）
+        expected_data = (
+            "[長岡消防] 【火災】 町名\n災害詳細：建物火災\n発生日時：2025/01/23 01:59"
+        )
+
+        # テスト（住所2）
+        rendered_text = instance._create_notify_text(input_data)
 
     def test_create_data_for_create_notify_text(self, setup_logger):
         instance = FwdNagaoka()
@@ -139,7 +208,7 @@ class TestNagaokaMain:
         input_data.sub_category = "建物火災"
         input_data.open_dt = _open_dt
         input_data.status = nagaoka_datamodel.DisasterStatus.発生
-        input_data.address1 = "長岡市"
+        input_data.address1 = None
         input_data.address2 = "町名"
         input_data.address3 = "N丁目"
         input_data.close_dt = None
@@ -150,7 +219,7 @@ class TestNagaokaMain:
             "sub_category": "建物火災",
             "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
             "status": "発生",
-            "address1": "長岡市",
+            "address1": None,
             "address2": "町名",
             "address3": "N丁目",
             "close_dt": "",
