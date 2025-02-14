@@ -31,7 +31,7 @@ from nagaoka_main import FwdNagaoka
 TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def setup_logger():
     # ログフォーマットファイルパス
     setting_file_path = TEST_RESOURCE_DIR / "test_util_logger_initializer_1.yaml"
@@ -55,7 +55,7 @@ def setup_logger():
                 shutil.rmtree(log_out_dir)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def setup_db():
     # DB初期化
     FwdNagaoka.setup()
