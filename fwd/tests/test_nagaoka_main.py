@@ -314,4 +314,37 @@ class TestNagaokaMain:
         session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
         session.commit()
 
-        # テスト
+        # mocker登録（リクエスト処理用）
+        mocker.patch("util_request_wrapper.post_to_discord", return_value=True)
+
+        # テスト実行
+        instance = FwdNagaoka()
+        instance._notify()
+
+        # テスト結果確認（Statusにより確認）
+        assert (
+            session.query(nagaoka_datamodel.NagaokaRawText)
+            .filter(nagaoka_datamodel.NagaokaRawText.id == 1)
+            .first()
+            .notify_status
+            == nagaoka_datamodel.NotifyStatus.NOTIFIED
+        )
+        assert (
+            session.query(nagaoka_datamodel.NagaokaRawText)
+            .filter(nagaoka_datamodel.NagaokaRawText.id == 2)
+            .first()
+            .notify_status
+            == nagaoka_datamodel.NotifyStatus.SKIPPED
+        )
+        assert (
+            session.query(nagaoka_datamodel.NagaokaRawText)
+            .filter(nagaoka_datamodel.NagaokaRawText.id == 3)
+            .first()
+            .notify_status
+            == nagaoka_datamodel.NotifyStatus.NOTIFIED
+        )
+
+        # テスト用に投入したデータを削除
+        session.query(nagaoka_datamodel.NagaokaRawText).delete()
+        session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+        session.commit()
