@@ -244,5 +244,74 @@ class TestNagaokaMain:
         output_data = instance._create_data_for_create_notify_text(input_data)
         assert expected_data == output_data
 
-    def test_notify(self, mocker: MockFixture, setup_logger):
-        pass
+    def test_notify(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータの作成
+        # 発生系
+        raw_text_data_1 = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data_1.id = 1
+        raw_text_data_1.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        raw_text_data_1.retr_dt = datetime.datetime.now()
+        raw_text_data_1.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data_1.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+        _detail_info_1 = nagaoka_datamodel.NagaokaDisasterDetail()
+        _detail_info_1.raw_text_id = 1
+        _detail_info_1.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        _detail_info_1.sub_category = "建物火災"
+        _detail_info_1.open_dt = datetime.datetime(2024, 12, 23, 1, 23)
+        _detail_info_1.close_dt = None
+        _detail_info_1.status = nagaoka_datamodel.DisasterStatus.発生
+        _detail_info_1.address1 = None
+        _detail_info_1.address2 = "町名"
+        _detail_info_1.address3 = "N丁目"
+        raw_text_data_1.detail_info = _detail_info_1
+
+        # 終了
+        raw_text_data_2 = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data_2.id = 2
+        raw_text_data_2.raw_text = (
+            "12月23日 02:34 長岡市 町名 N丁目に救急活動のため消防車が出動しました。"
+        )
+        raw_text_data_2.retr_dt = datetime.datetime.now()
+        raw_text_data_2.text_pos = nagaoka_datamodel.TextPosition.PAST
+        raw_text_data_2.notify_status = nagaoka_datamodel.NotifyStatus.SKIPPED
+        _detail_info_2 = nagaoka_datamodel.NagaokaDisasterDetail()
+        _detail_info_2.raw_text_id = 2
+        _detail_info_2.main_category = nagaoka_datamodel.DisasterMainCategory.救急支援
+        _detail_info_2.sub_category = "救急活動"
+        _detail_info_2.open_dt = datetime.datetime(2024, 12, 23, 2, 34)
+        _detail_info_2.close_dt = None
+        _detail_info_2.status = nagaoka_datamodel.DisasterStatus.終了
+        _detail_info_2.address1 = None
+        _detail_info_2.address2 = "町名"
+        _detail_info_2.address3 = "N丁目"
+        raw_text_data_2.detail_info = _detail_info_2
+
+        # 通知済み
+        raw_text_data_3 = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data_3.id = 3
+        raw_text_data_3.raw_text = (
+            "12月23日 00:12 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        raw_text_data_3.retr_dt = datetime.datetime.now()
+        raw_text_data_3.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data_3.notify_status = nagaoka_datamodel.NotifyStatus.NOTIFIED
+        _detail_info_3 = nagaoka_datamodel.NagaokaDisasterDetail()
+        _detail_info_3.raw_text_id = 3
+        _detail_info_3.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        _detail_info_3.sub_category = "建物火災"
+        _detail_info_3.open_dt = datetime.datetime(2024, 12, 23, 0, 12)
+        _detail_info_3.close_dt = None
+        _detail_info_3.status = nagaoka_datamodel.DisasterStatus.発生
+        _detail_info_3.address1 = None
+        _detail_info_3.address2 = "町名"
+        _detail_info_3.address3 = "N丁目"
+        raw_text_data_3.detail_info = _detail_info_3
+
+        # テストデータ登録
+        session = util_db_manager.SESSION()
+        session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
+        session.commit()
+
+        # テスト
