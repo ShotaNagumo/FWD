@@ -243,3 +243,6 @@ class TestNagaokaMain:
         # テスト（close_dt無の場合）
         output_data = instance._create_data_for_create_notify_text(input_data)
         assert expected_data == output_data
+
+    def test_notify(self, mocker: MockFixture, setup_logger):
+        pass
