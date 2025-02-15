@@ -405,3 +405,217 @@ class TestNagaokaMain:
         _status_str = "02:34に鎮火しました"
         _close_dt = datetime.datetime(2024, 12, 24, 2, 34)
         assert _close_dt == instance._get_close_dt(_status_str, _open_dt)
+
+    def test_analyze_text(self, setup_logger):
+        # 基本テストデータ
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # テスト実行
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.raw_text_id == raw_text_data.id
+        assert detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.火災
+        assert detail_data.sub_category == "建物火災"
+        assert detail_data.open_dt == datetime.datetime(2024, 12, 23, 1, 23)
+        assert detail_data.close_dt is None
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.発生
+        assert detail_data.address1 is None
+        assert detail_data.address2 == "町名"
+        assert detail_data.address3 == "N丁目"
+
+    def test_analyze_text_年またぎ(self, setup_logger):
+        # 年またぎ用テストケース
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.raw_text = (
+            "12月31日 23:59 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        raw_text_data.retr_dt = datetime.datetime(2025, 1, 1, 0, 0)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # テスト実行
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.open_dt == datetime.datetime(2024, 12, 31, 23, 59)
+
+    def test_analyze_text_長岡市外(self, setup_logger):
+        # 長岡市外用テストケース（市名）
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.raw_text = (
+            "12月23日 01:23 見附市 町名 に市外応援火災のため消防車が出動しました。"
+        )
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # テスト実行
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "見附市"
+        assert detail_data.address2 == "町名"
+        assert detail_data.address3 is None
+
+        # 長岡市外用テストケース（高速）
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.raw_text = (
+            "12月23日 01:23 高速 北陸道 下りに高速車両火災のため消防車が出動しました。"
+        )
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # テスト実行
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "高速"
+        assert detail_data.address2 == "北陸道"
+        assert detail_data.address3 == "下り"
+
+    def test_analyze_text_災害種別バリエーション(self, setup_logger):
+        # 基本テストケース
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # 火災（火災種別一覧は例規集より引用／一部、出動情報に掲載の文字列に合わせて改変）
+        choices = (
+            "建物火災",
+            "高層建物火災",
+            "病院火災",
+            "危険物火災",
+            "林野火災",
+            "高速法面火災",
+            "車両火災",
+            "電柱火災",
+            "高速車両火災",
+            "トンネル火災",
+            "地下駐火災",
+            "市外応援火災",
+            "特命火災",  # 掲載実績はないが念のためテスト
+        )
+        for _sub_category in choices:
+            # テスト実行
+            raw_text_data.raw_text = f"12月23日 01:23 長岡市 町名 N丁目に{_sub_category}のため消防車が出動しました。"
+            instance = FwdNagaoka()
+            detail_data = instance._analyze_text(raw_text_data)
+            assert (
+                detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.火災
+            )
+            assert detail_data.sub_category == _sub_category
+
+        # 救助（救助は一律「救助活動」）
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に救助活動のため消防車が出動しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.救助
+        assert detail_data.sub_category == "救助活動"
+
+        # 警戒（警戒種別一覧は例規集より引用／一部、出動情報に掲載の文字列に合わせて改変）
+        # ※無言警戒、自火報警戒は「警戒活動」として掲載される
+        choices = (
+            "警戒活動",
+            "ガス漏れ警戒",
+            "油漏れ警戒",
+            "枯草警戒",
+            "地滑り警戒",
+            "特命警戒",  # 掲載実績はないが念のためテスト
+        )
+        for _sub_category in choices:
+            # テスト実行
+            raw_text_data.raw_text = f"12月23日 01:23 長岡市 町名 N丁目に{_sub_category}のため消防車が出動しました。"
+            instance = FwdNagaoka()
+            detail_data = instance._analyze_text(raw_text_data)
+            assert (
+                detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.警戒
+            )
+            assert detail_data.sub_category == _sub_category
+
+        # 救急支援（救急支援は一律「救急活動」）
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に救急活動のため消防車が出動しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert (
+            detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.救急支援
+        )
+        assert detail_data.sub_category == "救急活動"
+
+    def test_analyze_text_災害状態バリエーション(self, setup_logger):
+        # 基本テストケース
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # 発生
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に火災のため消防車が出動しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.発生
+
+        # 終了（一般）
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.PAST
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.終了
+
+        # 救助終了
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目の救助活動は02:34に救助終了しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.救助終了
+
+        # 消火不要
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目の建物火災は消火の必要はありませんでした。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.消火不要
+
+        # 鎮圧
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目の建物火災は02:34に鎮圧しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.鎮圧
+
+        # 鎮火
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目の建物火災は02:34に鎮火しました。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.鎮火
+
+        # Default: 終了
+        raw_text_data.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目の建物火災は※不明なステータス※。"
+        )
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.status == nagaoka_datamodel.DisasterStatus.終了
+
+    def test_analyze_text_解析失敗(self, setup_logger):
+        pass
