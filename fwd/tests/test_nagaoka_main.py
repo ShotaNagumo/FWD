@@ -348,3 +348,40 @@ class TestNagaokaMain:
         session.query(nagaoka_datamodel.NagaokaRawText).delete()
         session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
         session.commit()
+
+    def test_notify_exception(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータの作成
+        # 発生系
+        raw_text_data_1 = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data_1.id = 1
+        raw_text_data_1.raw_text = (
+            "12月23日 01:23 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        raw_text_data_1.retr_dt = datetime.datetime.now()
+        raw_text_data_1.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data_1.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+        _detail_info_1 = nagaoka_datamodel.NagaokaDisasterDetail()
+        _detail_info_1.raw_text_id = 1
+        _detail_info_1.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        _detail_info_1.sub_category = "建物火災"
+        _detail_info_1.open_dt = datetime.datetime(2024, 12, 23, 1, 23)
+        _detail_info_1.close_dt = None
+        _detail_info_1.status = nagaoka_datamodel.DisasterStatus.発生
+        _detail_info_1.address1 = None
+        _detail_info_1.address2 = "町名"
+        _detail_info_1.address3 = "N丁目"
+        raw_text_data_1.detail_info = _detail_info_1
+
+        # テストデータ登録
+        session = util_db_manager.SESSION()
+        session.add(raw_text_data_1)
+        session.commit()
+
+        # mocker登録（リクエスト処理用）
+        with mocker.patch(
+            "util_request_wrapper.post_to_discord", side_effect=Exception
+        ):
+            with pytest.raises(Exception):
+                # テスト実行
+                instance = FwdNagaoka()
+                instance._notify()
