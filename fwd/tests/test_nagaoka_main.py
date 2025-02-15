@@ -108,12 +108,6 @@ class TestNagaokaMain:
         with pytest.raises(ValueError):
             instance._split_webtext("dummy")
 
-    def test_get_close_dt(self, setup_logger):
-        pass
-
-    def test_xxx(self, setup_logger, setup_db):
-        assert True
-
     def test_create_notify_text(self, mocker: MockFixture, setup_logger):
         instance = FwdNagaoka()
 
@@ -385,3 +379,29 @@ class TestNagaokaMain:
                 # テスト実行
                 instance = FwdNagaoka()
                 instance._notify()
+
+        # テスト用に投入したデータを削除
+        session.query(nagaoka_datamodel.NagaokaRawText).delete()
+        session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+        session.commit()
+
+    def test_get_close_dt(self, setup_logger):
+        # 災害終了時刻が記載されていない場合
+        _open_dt = datetime.datetime.now()
+        _status_str = "消防車が出動しました"
+
+        # テスト実行
+        instance = FwdNagaoka()
+        assert instance._get_close_dt(_status_str, _open_dt) is None
+
+        # 発生日と同日の場合
+        _open_dt = datetime.datetime(2024, 12, 23, 1, 23)
+        _status_str = "02:34に鎮火しました"
+        _close_dt = datetime.datetime(2024, 12, 23, 2, 34)
+        assert _close_dt == instance._get_close_dt(_status_str, _open_dt)
+
+        # 発生日の翌日の場合
+        _open_dt = datetime.datetime(2024, 12, 23, 23, 45)
+        _status_str = "02:34に鎮火しました"
+        _close_dt = datetime.datetime(2024, 12, 24, 2, 34)
+        assert _close_dt == instance._get_close_dt(_status_str, _open_dt)
