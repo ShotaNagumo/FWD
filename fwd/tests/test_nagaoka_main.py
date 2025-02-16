@@ -555,6 +555,15 @@ class TestNagaokaMain:
         )
         assert detail_data.sub_category == "救急活動"
 
+        # 災害種別不明
+        raw_text_data.raw_text = "12月23日 01:23 長岡市 町名 N丁目に※未定義の災害※のため消防車が出動しました。"
+        instance = FwdNagaoka()
+        detail_data = instance._analyze_text(raw_text_data)
+        assert (
+            detail_data.main_category == nagaoka_datamodel.DisasterMainCategory.その他
+        )
+        assert detail_data.sub_category == "※未定義の災害※"
+
     def test_analyze_text_災害状態バリエーション(self, setup_logger):
         # 基本テストケース
         raw_text_data = nagaoka_datamodel.NagaokaRawText()
@@ -618,4 +627,21 @@ class TestNagaokaMain:
         assert detail_data.status == nagaoka_datamodel.DisasterStatus.終了
 
     def test_analyze_text_解析失敗(self, setup_logger):
-        pass
+        # 基本テストケース
+        raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        raw_text_data.id = 1
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+
+        # 一回目の解析失敗
+        raw_text_data.raw_text = "※解析失敗※"
+        instance = FwdNagaoka()
+        with pytest.raises(ValueError):
+            instance._analyze_text(raw_text_data)
+
+        # 二回目の解析失敗
+        raw_text_data.raw_text = "12月23日 01:23 長岡市 ※解析失敗※。"
+        instance = FwdNagaoka()
+        with pytest.raises(ValueError):
+            instance._analyze_text(raw_text_data)
