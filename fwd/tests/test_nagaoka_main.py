@@ -781,10 +781,12 @@ class TestNagaokaMain:
                 results[0].raw_text
                 == "01月01日 05:49 長岡市 〇〇 2丁目に建物火災のため消防車が出動しました。"
             )
+            assert results[0].notify_status == nagaoka_datamodel.NotifyStatus.NOT_YET
             assert (
                 results[1].raw_text
                 == "01月01日 05:50 長岡市 〇〇 1丁目に救急活動のため消防車が出動しました。"
             )
+            assert results[1].notify_status == nagaoka_datamodel.NotifyStatus.NOT_YET
 
         finally:
             # テスト結果として保存されたデータを削除
@@ -792,3 +794,52 @@ class TestNagaokaMain:
             session.query(nagaoka_datamodel.NagaokaRawText).delete()
             session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
             session.commit()
+
+    def test_commit_disaster_list_curr_過去収集(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        try:
+            # テストデータ読み込み
+            input_file_path = (
+                Path(__file__).parents[1]
+                / "tests_resource"
+                / "nagaoka_webtext_1_expected_curr.txt"
+            )
+            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+
+            # テスト実行
+            instance = FwdNagaoka()
+            instance._commit_disaster_list_curr(
+                instance._cleansing_webtext(webpage_text_curr),
+                datetime.datetime(2024, 1, 1, 5, 51),
+            )
+
+            # テスト結果を取得し確認
+            session = util_db_manager.SESSION()
+            results = session.query(nagaoka_datamodel.NagaokaRawText).all()
+            assert len(results) == 2
+            assert (
+                results[0].raw_text
+                == "01月01日 05:49 長岡市 〇〇 2丁目に建物火災のため消防車が出動しました。"
+            )
+            assert results[0].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+            assert (
+                results[1].raw_text
+                == "01月01日 05:50 長岡市 〇〇 1丁目に救急活動のため消防車が出動しました。"
+            )
+            assert results[1].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session = util_db_manager.SESSION()
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
+
+    def test_commit_disaster_list_curr_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        with mocker.patch("re.findall", side_effect=Exception):
+            with pytest.raises(Exception):
+                instance = FwdNagaoka()
+                instance._commit_disaster_list_curr("dummy")
