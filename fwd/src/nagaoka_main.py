@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import unicodedata
 from pathlib import Path
 from typing import Final, Optional
 
@@ -97,9 +98,9 @@ class FwdNagaoka:
                 webpage_text = text_file.read_text(encoding="utf-8")
 
                 # 災害情報テキストを前処理・分割
-                webpage_text_dev = self._split_webtext(
-                    self._cleansing_webtext(webpage_text)
-                )
+                webpage_text = unicodedata.normalize("NFKC", webpage_text)
+                webpage_text = self._cleansing_webtext(webpage_text)
+                webpage_text_dev = self._split_webtext(webpage_text)
 
                 # 災害情報（現在発生している災害）をDBへ登録
                 self._commit_disaster_list_curr(webpage_text_dev[0], retrieve_time)
