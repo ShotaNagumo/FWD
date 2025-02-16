@@ -305,43 +305,45 @@ class TestNagaokaMain:
 
         # テストデータ登録
         session = util_db_manager.SESSION()
-        session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
-        session.commit()
+        try:
+            session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
+            session.commit()
 
-        # mocker登録（リクエスト処理用）
-        mocker.patch("util_request_wrapper.post_to_discord", return_value=True)
+            # mocker登録（リクエスト処理用）
+            mocker.patch("util_request_wrapper.post_to_discord", return_value=True)
 
-        # テスト実行
-        instance = FwdNagaoka()
-        instance._notify()
+            # テスト実行
+            instance = FwdNagaoka()
+            instance._notify()
 
-        # テスト結果確認（Statusにより確認）
-        assert (
-            session.query(nagaoka_datamodel.NagaokaRawText)
-            .filter(nagaoka_datamodel.NagaokaRawText.id == 1)
-            .first()
-            .notify_status
-            == nagaoka_datamodel.NotifyStatus.NOTIFIED
-        )
-        assert (
-            session.query(nagaoka_datamodel.NagaokaRawText)
-            .filter(nagaoka_datamodel.NagaokaRawText.id == 2)
-            .first()
-            .notify_status
-            == nagaoka_datamodel.NotifyStatus.SKIPPED
-        )
-        assert (
-            session.query(nagaoka_datamodel.NagaokaRawText)
-            .filter(nagaoka_datamodel.NagaokaRawText.id == 3)
-            .first()
-            .notify_status
-            == nagaoka_datamodel.NotifyStatus.NOTIFIED
-        )
+            # テスト結果確認（Statusにより確認）
+            assert (
+                session.query(nagaoka_datamodel.NagaokaRawText)
+                .filter(nagaoka_datamodel.NagaokaRawText.id == 1)
+                .first()
+                .notify_status
+                == nagaoka_datamodel.NotifyStatus.NOTIFIED
+            )
+            assert (
+                session.query(nagaoka_datamodel.NagaokaRawText)
+                .filter(nagaoka_datamodel.NagaokaRawText.id == 2)
+                .first()
+                .notify_status
+                == nagaoka_datamodel.NotifyStatus.SKIPPED
+            )
+            assert (
+                session.query(nagaoka_datamodel.NagaokaRawText)
+                .filter(nagaoka_datamodel.NagaokaRawText.id == 3)
+                .first()
+                .notify_status
+                == nagaoka_datamodel.NotifyStatus.NOTIFIED
+            )
 
-        # テスト用に投入したデータを削除
-        session.query(nagaoka_datamodel.NagaokaRawText).delete()
-        session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
-        session.commit()
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
 
     def test_notify_exception(self, mocker: MockFixture, setup_logger, setup_db):
         # テストデータの作成
@@ -368,22 +370,24 @@ class TestNagaokaMain:
 
         # テストデータ登録
         session = util_db_manager.SESSION()
-        session.add(raw_text_data_1)
-        session.commit()
+        try:
+            session.add(raw_text_data_1)
+            session.commit()
 
-        # mocker登録（リクエスト処理用）
-        with mocker.patch(
-            "util_request_wrapper.post_to_discord", side_effect=Exception
-        ):
-            with pytest.raises(Exception):
-                # テスト実行
-                instance = FwdNagaoka()
-                instance._notify()
+            # mocker登録（リクエスト処理用）
+            with mocker.patch(
+                "util_request_wrapper.post_to_discord", side_effect=Exception
+            ):
+                with pytest.raises(Exception):
+                    # テスト実行
+                    instance = FwdNagaoka()
+                    instance._notify()
 
-        # テスト用に投入したデータを削除
-        session.query(nagaoka_datamodel.NagaokaRawText).delete()
-        session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
-        session.commit()
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
 
     def test_get_close_dt(self, setup_logger):
         # 災害終了時刻が記載されていない場合
