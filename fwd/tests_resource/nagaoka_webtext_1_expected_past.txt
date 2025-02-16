@@ -9,10 +9,10 @@
 		<ul style="margin: 0; padding: 5px; list-style: none; background: #FFECC1; font-size: 0.9em; color: #444444;">
 
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月31日 10:17 長岡市 〇〇 ４丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月31日 10:17 長岡市 〇〇 4丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月31日 00:07 長岡市 〇〇〇〇 ２丁目に警戒活動のため消防車が出動しました。</span>
+	<span>12月31日 00:07 長岡市 〇〇〇〇 2丁目に警戒活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
 	<span>12月30日 18:56 長岡市 〇〇〇 の建物火災は21:53に鎮火しました。</span>
@@ -33,19 +33,19 @@
 	<span>12月30日 17:12 長岡市 〇〇〇 に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月30日 09:30 長岡市 〇〇 ２丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月30日 09:30 長岡市 〇〇 2丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月30日 02:20 長岡市 〇〇 ２丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月30日 02:20 長岡市 〇〇 2丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月30日 01:46 長岡市 〇〇 ２丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月30日 01:46 長岡市 〇〇 2丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月30日 00:15 長岡市 〇〇〇 １丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月30日 00:15 長岡市 〇〇〇 1丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>12月29日 18:04 長岡市 〇〇〇 ２丁目に救急活動のため消防車が出動しました。</span>
+	<span>12月29日 18:04 長岡市 〇〇〇 2丁目に救急活動のため消防車が出動しました。</span>
 </li>
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
 	<span>12月29日 09:29 長岡市 〇〇 に救急活動のため消防車が出動しました。</span>

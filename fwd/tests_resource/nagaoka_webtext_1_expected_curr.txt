@@ -9,7 +9,10 @@
 		<ul style="margin: 0; padding: 5px; list-style: none; background: #FFECC1; font-size: 0.9em; color: #444444;">
 
 <li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
-	<span>01月01日 05:50 長岡市 〇〇 １丁目に救急活動のため消防車が出動しました。</span>
+	<span>01月01日 05:50 長岡市 〇〇 1丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>01月01日 05:49 長岡市 〇〇 2丁目に建物火災のため消防車が出動しました。</span>
 </li>
 
 		</ul>
