@@ -754,3 +754,41 @@ class TestNagaokaMain:
             session.query(nagaoka_datamodel.NagaokaRawText).delete()
             session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
             session.commit()
+
+    def test_commit_disaster_list_curr_通常収集(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        try:
+            # テストデータ読み込み
+            input_file_path = (
+                Path(__file__).parents[1]
+                / "tests_resource"
+                / "nagaoka_webtext_1_expected_curr.txt"
+            )
+            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+
+            # テスト実行
+            instance = FwdNagaoka()
+            instance._commit_disaster_list_curr(
+                instance._cleansing_webtext(webpage_text_curr)
+            )
+
+            # テスト結果を取得し確認
+            session = util_db_manager.SESSION()
+            results = session.query(nagaoka_datamodel.NagaokaRawText).all()
+            assert len(results) == 2
+            assert (
+                results[0].raw_text
+                == "01月01日 05:49 長岡市 〇〇 2丁目に建物火災のため消防車が出動しました。"
+            )
+            assert (
+                results[1].raw_text
+                == "01月01日 05:50 長岡市 〇〇 1丁目に救急活動のため消防車が出動しました。"
+            )
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session = util_db_manager.SESSION()
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
