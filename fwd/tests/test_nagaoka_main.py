@@ -649,3 +649,108 @@ class TestNagaokaMain:
         instance = FwdNagaoka()
         with pytest.raises(ValueError):
             instance._analyze_text(raw_text_data)
+
+    def test_analyze(self, setup_logger, setup_db):
+        # テストデータを追加する
+        raw_text_datas = []
+        # 1件目：発生
+        _raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        _raw_text_data.id = 1
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
+        _raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        _raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+        _raw_text_data.raw_text = (
+            "12月23日 01:02 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        _raw_text_data.detail_info = None
+        raw_text_datas.append(_raw_text_data)
+        # 2件目：終了
+        _raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        _raw_text_data.id = 2
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
+        _raw_text_data.text_pos = nagaoka_datamodel.TextPosition.PAST
+        _raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+        _raw_text_data.raw_text = (
+            "12月23日 01:01 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        _raw_text_data.detail_info = None
+        raw_text_datas.append(_raw_text_data)
+        # 3件目：発生（解析済み）
+        _raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        _raw_text_data.id = 3
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
+        _raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        _raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.SKIPPED
+        _raw_text_data.raw_text = (
+            "12月23日 01:00 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        _detail_data = nagaoka_datamodel.NagaokaDisasterDetail()
+        _detail_data.raw_text_id = 3
+        _detail_data.main_category = nagaoka_datamodel.DisasterMainCategory.火災
+        _detail_data.sub_category = "建物火災"
+        _detail_data.open_dt = datetime.datetime(2024, 12, 23, 1, 0)
+        _detail_data.close_dt = None
+        _detail_data.status = nagaoka_datamodel.DisasterStatus.発生
+        _detail_data.address1 = None
+        _detail_data.address2 = "町名"
+        _detail_data.address3 = "N丁目"
+        _raw_text_data.detail_info = _detail_data
+        raw_text_datas.append(_raw_text_data)
+        # DBに登録
+        session = util_db_manager.SESSION()
+        try:
+            session.add_all(raw_text_datas)
+            session.commit()
+
+            # テスト実行
+            instance = FwdNagaoka()
+            instance._analyze()
+            results = session.query(nagaoka_datamodel.NagaokaRawText).all()
+
+            # 1件目：detail_dataが登録され、通知不要が設定されていないこと
+            assert results[0].detail_info is not None
+            assert results[0].notify_status == nagaoka_datamodel.NotifyStatus.NOT_YET
+
+            # 2件目：detail_dataが登録され、通知不要が設定されていること
+            assert results[1].detail_info is not None
+            assert results[1].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+
+            # 3件目：実行前と同じ状態であること
+            assert results[2] == raw_text_datas[2]
+
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
+
+    def test_analyze_exception(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータを追加する
+        # 1件目：発生
+        _raw_text_data = nagaoka_datamodel.NagaokaRawText()
+        _raw_text_data.id = 1
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
+        _raw_text_data.text_pos = nagaoka_datamodel.TextPosition.CURR
+        _raw_text_data.notify_status = nagaoka_datamodel.NotifyStatus.NOT_YET
+        _raw_text_data.raw_text = (
+            "12月23日 01:02 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
+        )
+        _raw_text_data.detail_info = None
+        session = util_db_manager.SESSION()
+        try:
+            session.add(_raw_text_data)
+            session.commit()
+
+            # テスト実行
+            instance = FwdNagaoka()
+            with mocker.patch(
+                "nagaoka_main.FwdNagaoka._analyze_text", side_effect=ValueError
+            ):
+                with pytest.raises(ValueError):
+                    instance._analyze()
+
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
