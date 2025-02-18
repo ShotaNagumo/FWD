@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import requests
 import yaml
 from pytest_mock import MockFixture
 
@@ -932,3 +933,35 @@ class TestNagaokaMain:
             with pytest.raises(Exception):
                 instance = FwdNagaoka()
                 instance._commit_disaster_list_past("dummy")
+
+    def test_execute(self, mocker: MockFixture, setup_logger):
+        instance = FwdNagaoka()
+        # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
+        with (
+            mocker.patch("util_request_wrapper.download_webpage", return_value="dummy"),
+            mocker.patch(
+                "nagaoka_main.FwdNagaoka._cleansing_webtext", return_value="dummy"
+            ),
+            mocker.patch(
+                "nagaoka_main.FwdNagaoka._split_webtext",
+                return_value=("dummy", "dummy"),
+            ),
+            mocker.patch(
+                "nagaoka_main.FwdNagaoka._commit_disaster_list_curr", return_value=None
+            ),
+            mocker.patch(
+                "nagaoka_main.FwdNagaoka._commit_disaster_list_curr", return_value=None
+            ),
+            mocker.patch("nagaoka_main.FwdNagaoka._analyze", return_value=None),
+            mocker.patch("nagaoka_main.FwdNagaoka._notify", return_value=None),
+        ):
+            execute_result = instance.execute()
+            assert execute_result is True
+
+    def test_execute_exception(self, mocker: MockFixture, setup_logger):
+        instance = FwdNagaoka()
+        with mocker.patch(
+            "util_request_wrapper.download_webpage", side_effect=requests.HTTPError
+        ):
+            execute_result = instance.execute()
+            assert execute_result is False
