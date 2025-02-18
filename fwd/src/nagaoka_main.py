@@ -76,8 +76,15 @@ class FwdNagaoka:
             self._logger.exception("execute() 実行失敗")
             return False
 
-    def store_old_data(self, text_dir: str):
-        # TODO: 過去データのインポート機能追加
+    def store_old_data(self, text_dir: str) -> bool:
+        """過去データをインポートする
+
+        Args:
+            text_dir (str): 過去データが格納されているディレクトリパス
+
+        Returns:
+            bool: 処理結果（正常終了：True, 異常終了：False）
+        """
         self._logger.info("store_old_data() 実行開始")
         try:
             # 指定されたディレクトリ内の対象ファイル一覧を検索する
@@ -119,11 +126,15 @@ class FwdNagaoka:
             # 災害情報の解析
             self._logger.info("災害情報の登録完了・解析開始")
             self._analyze()
+
+            # 正常終了
             self._logger.info("災害情報の解析完了")
+            return True
 
         except Exception:
+            # 異常終了
             self._logger.exception("store_old_data() 実行失敗")
-        self._logger.info("store_old_data() 実行終了")
+            return False
 
     def _cleansing_webtext(self, webpage_text: str) -> str:
         """htmlテキスト解析前に、前処理として整形処理を行う
