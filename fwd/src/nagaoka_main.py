@@ -38,8 +38,12 @@ class FwdNagaoka:
         """テーブルを作成する"""
         nagaoka_datamodel.create_table_all()
 
-    def execute(self):
-        """災害情報の取得から通知までの一連の処理を実行する"""
+    def execute(self) -> bool:
+        """災害情報の取得から通知までの一連の処理を実行する
+
+        Returns:
+            bool: 処理結果（正常終了：True, 異常終了：False）
+        """
         try:
             self._logger.info("execute() 実行開始")
             # Webから災害情報テキストを取得
@@ -64,9 +68,13 @@ class FwdNagaoka:
             # 災害情報の通知
             self._notify()
 
+            # 正常終了
             self._logger.info("execute() 実行完了")
+            return True
         except Exception:
+            # 異常終了
             self._logger.exception("execute() 実行失敗")
+            return False
 
     def store_old_data(self, text_dir: str):
         # TODO: 過去データのインポート機能追加
