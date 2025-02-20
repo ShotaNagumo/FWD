@@ -965,3 +965,108 @@ class TestNagaokaMain:
         ):
             execute_result = instance.execute()
             assert execute_result is False
+
+    def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
+        instance = FwdNagaoka()
+        session = util_db_manager.SESSION()
+        try:
+            # テスト実行
+            _text_dir = (
+                Path(__file__).parents[1] / "tests_resource" / "store_old_data_test"
+            )
+            instance.store_old_data(_text_dir.as_posix())
+
+            # テスト結果（登録件数）を確認
+            # 1ファイル目：発生1、過去20
+            # 2ファイル目：発生0、過去1
+            assert (1 + 20 + 0 + 1) == session.query(
+                nagaoka_datamodel.NagaokaRawText
+            ).count()
+
+            # 各レコードの確認
+            results = session.query(nagaoka_datamodel.NagaokaRawText).all()
+
+            # 1件目
+            assert (
+                results[0].raw_text
+                == "01月01日 14:04 長岡市 町名 に救急活動のため消防車が出動しました。"
+            )
+            assert results[0].retr_dt == datetime.datetime(2024, 1, 1, 14, 7)
+            assert results[0].text_pos == nagaoka_datamodel.TextPosition.CURR
+            assert results[0].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+            assert results[0].detail_info is not None
+
+            # 2件目
+            assert (
+                results[1].raw_text
+                == "12月26日 20:34 長岡市 町名 1丁目に警戒活動のため消防車が出動しました。"
+            )
+            assert results[1].retr_dt == datetime.datetime(2024, 1, 1, 14, 7)
+            assert results[1].text_pos == nagaoka_datamodel.TextPosition.PAST
+            assert results[1].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+            assert results[1].detail_info is not None
+
+            # 22件目（2ファイル目で新規登録したデータ）
+            assert (
+                results[21].raw_text
+                == "01月01日 14:04 長岡市 町名 に救急活動のため消防車が出動しました。"
+            )
+            assert results[21].retr_dt == datetime.datetime(2024, 1, 1, 15, 30)
+            assert results[21].text_pos == nagaoka_datamodel.TextPosition.PAST
+            assert results[21].notify_status == nagaoka_datamodel.NotifyStatus.SKIPPED
+            assert results[21].detail_info is not None
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
+
+    def test_store_old_data_不正ファイルあり(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        instance = FwdNagaoka()
+        session = util_db_manager.SESSION()
+        try:
+            _text_dir = (
+                Path(__file__).parents[1]
+                / "tests_resource"
+                / "store_old_data_test_invalid_files"
+            )
+
+            # テスト対象関数を実行
+            instance.store_old_data(_text_dir.as_posix())
+
+            # テスト結果を確認
+            # 2ファイル目は読み込まれないため、件数は20+1=21件が期待値となる
+            assert (20 + 1) == session.query(nagaoka_datamodel.NagaokaRawText).count()
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()
+
+    def test_store_old_data_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        instance = FwdNagaoka()
+        session = util_db_manager.SESSION()
+        try:
+            _text_dir = (
+                Path(__file__).parents[1] / "tests_resource" / "store_old_data_test"
+            )
+
+            # テスト対象関数を実行
+            with mocker.patch(
+                "nagaoka_main.FwdNagaoka._commit_disaster_list_curr",
+                side_effect=Exception,
+            ):
+                result = instance.store_old_data(_text_dir.as_posix())
+                assert result is False
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(nagaoka_datamodel.NagaokaRawText).delete()
+            session.query(nagaoka_datamodel.NagaokaDisasterDetail).delete()
+            session.commit()

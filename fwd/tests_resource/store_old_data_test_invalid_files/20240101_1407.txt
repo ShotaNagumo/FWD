@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<TITLE>消防出動情報</TITLE>
+<meta http-equiv="Content-Type" content="text/html; charset=SHIFT_JIS">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+</HEAD>
+<BODY>
+<CENTER>
+<TABLE width="690" >
+<TR>
+<TH>
+<TABLE cellspacing=2>
+  <TR>
+    <TD  valign="middle" bgcolor="black">
+    <TABLE width="100%" height="100%" bgcolor="white">
+      <TR>
+        <TD valign="middle"><FONT size="+3">消&nbsp防&nbsp出&nbsp動&nbsp情&nbsp報&nbsp</FONT></TD>
+      </TR>
+    </TABLE>
+    </TD>
+  </TR>
+</TABLE>
+</TH>
+</TR>
+<TR>
+<TD><BR></TD>
+</TR>
+<TR>
+<TD><BR></TD>
+</TR>
+<!-- ↓現在発生している災害↓ -->
+<TR>
+	<TD>
+		<div>
+			<span style="color: #B22222;">■ </span><span style="font-weight: bold; color: #444444; text-decoration: underline;">現在発生している災害</span>
+		</div>
+		<br />
+		
+		<ul style="margin: 0; padding: 5px; list-style: none; background: #FFECC1; font-size: 0.9em; color: #444444;">
+
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>01月01日　14:04　長岡市 町名 に救急活動のため消防車が出動しました。</span>
+</li>
+
+		</ul>
+	</TD>
+</TR>
+<!-- ↑現在発生している災害↑ -->
+<TR>
+<TD><BR></TD>
+</TR>
+<!-- ↓過去の災害経過情報↓ -->
+<TR>
+	<TD>
+		<div>
+			<span style="color: #446444;">■ </span><span style="font-weight: bold; color: #444444; text-decoration: underline;">過去の災害経過情報</span>
+		</div>
+		<br />
+		
+		<ul style="margin: 0; padding: 5px; list-style: none; background: #FFECC1; font-size: 0.9em; color: #444444;">
+
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月31日　19:51　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月31日　14:28　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月31日　07:23　長岡市 町名 に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月31日　06:42　長岡市 町名 １丁目に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月31日　06:06　長岡市 町名 １丁目に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月30日　18:45　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月30日　14:05　長岡市 町名 １丁目の建物火災は14:23に鎮火しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月30日　14:29　長岡市 町名 に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月30日　14:05　長岡市 町名 １丁目に建物火災のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月30日　13:43　長岡市 町名 に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月29日　23:59　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月29日　08:27　長岡市 町名 １丁目に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月28日　11:25　長岡市 町名 の建物火災は15:07に鎮火しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月28日　11:25　長岡市 町名 の建物火災は13:20に鎮圧しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月28日　11:25　長岡市 町名 に建物火災のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月28日　09:26　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月27日　17:06　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月27日　05:47　長岡市 町名 に警戒活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月27日　04:18　長岡市 町名 １丁目に救急活動のため消防車が出動しました。</span>
+</li>
+<li style="padding: 5px 3px 5px 3px; border-bottom: 1px dotted #999;">
+	<span>12月26日　20:34　長岡市 町名 １丁目に警戒活動のため消防車が出動しました。</span>
+</li>
+
+		</ul>
+	</TD>
+</TR>
+<!-- ↑過去の災害経過情報↑ -->
+</TABLE>
+<B>お問い合わせ</B><BR>
+<B>〒940-0082</B><BR>
+<B>長岡市千歳1-3-100</B><BR>
+<B>警防課指令室</B><BR>
+<B>0258-36-0119</B><BR>
+<B>長岡市消防本部</B><BR>
+</CENTER>
+</BODY>
+</HTML>
