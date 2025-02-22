@@ -31,3 +31,13 @@ lsb_release -a
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+## インストーラの解凍
+
+## fwdパッケージのインストール
+※パッケージをインストールする
+※uv sync を行う
+
+## crontab設定の追加
+※手動で設定する
+※cron.d の利用は動作確認できず
