@@ -5,6 +5,7 @@ import unicodedata
 from pathlib import Path
 from typing import Final, Optional
 
+import common_datamodel
 import nagaoka_datamodel
 import sqlalchemy
 import util_config
@@ -36,6 +37,7 @@ class FwdNagaoka:
     @staticmethod
     def setup():
         """テーブルを作成する"""
+        common_datamodel.create_table_all()
         nagaoka_datamodel.create_table_all()
 
     def execute(self) -> bool:

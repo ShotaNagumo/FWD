@@ -88,18 +88,6 @@ class DisasterStatus(Enum):
     """
     発生 = auto()
 
-    """救助終了
-    """
-    救助終了 = auto()
-
-    """消火不要
-    """
-    消火不要 = auto()
-
-    """鎮圧
-    """
-    鎮圧 = auto()
-
     """鎮火
     """
     鎮火 = auto()
@@ -109,14 +97,14 @@ class DisasterStatus(Enum):
     終了 = auto()
 
 
-class NagaokaRawText(Base):
+class NiigataRawText(Base):
     """災害情報を格納するテーブル"""
 
     """テーブル名
     """
-    __tablename__ = "nagaoka_raw_text"
+    __tablename__ = "niigata_raw_text"
 
-    """NagaokaRawText ID
+    """NiigataRawText ID
     """
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -141,23 +129,20 @@ class NagaokaRawText(Base):
 
     """詳細テーブルのオブジェクト
     """
-    detail_info = relationship("NagaokaDisasterDetail", uselist=False)
+    detail_info = relationship("NiigataDisasterDetail", uselist=False)
 
 
-class NagaokaDisasterDetail(Base):
-    __tablename__ = "nagaoka_disaster_detail"
+class NiigataDisasterDetail(Base):
+    __tablename__ = "niigata_disaster_detail"
 
-    """ "nagaoka_raw_text"テーブルのID
+    """ "niigata_raw_text"テーブルのID
     """
     raw_text_id = Column(
-        Integer, ForeignKey("nagaoka_raw_text.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("niigata_raw_text.id", ondelete="CASCADE"), primary_key=True
     )
     """災害種別
     """
     main_category = Column(sqlalchemy.Enum(DisasterMainCategory), nullable=False)
-    """災害種別詳細
-    """
-    sub_category = Column(String, nullable=True)
     """災害発生時刻
     """
     open_dt = Column(DateTime, nullable=False)
@@ -167,12 +152,12 @@ class NagaokaDisasterDetail(Base):
     """災害状態
     """
     status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
-    """住所1（長岡市以外の場合の都市名）
+    """住所1（区名/道路名）
     """
     address1 = Column(String, nullable=True)
-    """住所2（町名、道路名）
+    """住所2（町名/道路方向）
     """
     address2 = Column(String, nullable=False)
-    """住所3（丁目、道路方向）
+    """住所3（丁目/キロポスト、道路施設）
     """
     address3 = Column(String, nullable=True)
