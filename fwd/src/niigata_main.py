@@ -24,8 +24,8 @@ from sqlalchemy.orm.session import Session
 
 
 class FwdNiigata:
-    WEBPAGE_URL: Final[str] = "http://www.nagaoka-fd.com/fire/saigai/saigaipc.html"
-    WEBPAGE_ENC: Final[str] = "sjis"
+    WEBPAGE_URL: Final[str] = "https://niigata119.city.niigata.lg.jp/"
+    WEBPAGE_ENC: Final[str] = "utf8"
 
     def __init__(self):
         """コンストラクタ"""
