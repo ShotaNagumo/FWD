@@ -138,16 +138,6 @@ class FwdNiigata:
             self._logger.exception("store_old_data() 実行失敗")
             return False
 
-    def _cleansing_webtext(self, webpage_text: str) -> str:
-        """htmlテキスト解析前に、前処理として整形処理を行う
-        Args:
-            webpage_text (str): 災害情報を含むWebページのテキスト
-
-        Returns:
-            str: 前処理後のWebページテキスト
-        """
-        return re.sub(r"\u3000", " ", webpage_text)
-
     def _split_webtext(self, webpage_text: str) -> list[str]:
         """htmlテキストを、「現在発生している災害」が記載されている部分と「過去の災害」が記載されている部分に分割する
 
