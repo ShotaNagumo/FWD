@@ -54,21 +54,22 @@ class FwdNiigata:
             )
 
             # 災害情報テキストを前処理・分割
-            webpage_text_dev = self._split_webtext(
-                self._cleansing_webtext(webpage_text)
-            )
+            webpage_text_div = self._split_webtext(webpage_text)
+            print(webpage_text_div[0])
+            print("-" * 120)
+            print(webpage_text_div[1])
 
             # 災害情報（現在発生している災害）をDBへ登録
-            self._commit_disaster_list_curr(webpage_text_dev[0])
+            # self._commit_disaster_list_curr(webpage_text_dev[0])
 
             # 災害情報（過去の災害情報）をDBへ登録
-            self._commit_disaster_list_past(webpage_text_dev[1])
+            # self._commit_disaster_list_past(webpage_text_dev[1])
 
             # 災害情報の解析
-            self._analyze()
+            # self._analyze()
 
             # 災害情報の通知
-            self._notify()
+            # self._notify()
 
             # 正常終了
             self._logger.info("execute() 実行完了")
@@ -153,7 +154,7 @@ class FwdNiigata:
 
         # 「現在」「過去」それぞれの災害情報を検索する
         pat = re.compile(
-            r".+↓現在発生している災害↓(.+)↑現在発生している災害↑.+↓過去の災害経過情報↓(.+)↑過去の災害経過情報↑.+",
+            r""".*<p id="newInfo">(.+)</p>.+<div id="todayInfo">(.+?)</div>.*""",
             re.DOTALL,
         )
 
@@ -546,4 +547,5 @@ class FwdNiigata:
 
 if __name__ == "__main__":
     instance = FwdNiigata()
-    instance.setup()
+    # instance.setup()
+    instance.execute()
