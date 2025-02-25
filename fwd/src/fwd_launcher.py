@@ -35,9 +35,11 @@ def setup_fwd(args):
     # エラーとなることを防ぐためここでインポート
     import util_logger_initializer
     from nagaoka_main import FwdNagaoka
+    from niigata_main import FwdNiigata
 
     util_logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     FwdNagaoka.setup()
+    FwdNiigata.setup()
 
 
 def execute_nagaoka(args):
@@ -51,6 +53,17 @@ def execute_nagaoka(args):
     fwd_nagaoka.execute()
 
 
+def execute_niigata(args):
+    # 設定ファイル未作成の状態でlauncher実行した場合に
+    # エラーとなることを防ぐためここでインポート
+    import util_logger_initializer
+    from niigata_main import FwdNiigata
+
+    util_logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
+    fwd_niigata = FwdNiigata()
+    fwd_niigata.execute()
+
+
 def store_old_nagaoka(args):
     # 設定ファイル未作成の状態でlauncher実行した場合に
     # エラーとなることを防ぐためここでインポート
@@ -60,6 +73,17 @@ def store_old_nagaoka(args):
     util_logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
     fwdNagaoka = FwdNagaoka()
     fwdNagaoka.store_old_data(args.text_dir)
+
+
+def store_old_niigata(args):
+    # 設定ファイル未作成の状態でlauncher実行した場合に
+    # エラーとなることを防ぐためここでインポート
+    import util_logger_initializer
+    from niigata_main import FwdNiigata
+
+    util_logger_initializer.initialize(LOG_FORMAT_FILE_PATH)
+    fwdNiigata = FwdNiigata()
+    fwdNiigata.store_old_data(args.text_dir)
 
 
 def _create_argparser() -> argparse.ArgumentParser:
@@ -83,6 +107,15 @@ def _create_argparser() -> argparse.ArgumentParser:
     parser_store_old_nagaoka = subparsers.add_parser("store_old_nagaoka")
     parser_store_old_nagaoka.add_argument("text_dir", type=str)
     parser_store_old_nagaoka.set_defaults(func=store_old_nagaoka)
+
+    # 新潟市の処理を実行するコマンド定義
+    parser_execute_niigata = subparsers.add_parser("execute_niigata")
+    parser_execute_niigata.set_defaults(func=execute_niigata)
+
+    # 新潟市の過去データを設定するコマンド定義
+    parser_store_old_niigata = subparsers.add_parser("store_old_niigata")
+    parser_store_old_niigata.add_argument("text_dir", type=str)
+    parser_store_old_niigata.set_defaults(func=store_old_niigata)
 
     # parser本体を返却
     return argparser
