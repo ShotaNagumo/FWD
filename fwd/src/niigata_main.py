@@ -169,10 +169,10 @@ class FwdNiigata:
         ]
 
     def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
-        """「現在発生している災害」の文字列を抽出してDBに登録する
+        """「最新出動情報」の文字列より、災害発生状況を抽出してDBに登録する
 
         Args:
-            webpage_text_curr (str): 「現在発生している災害」の文字列
+            webpage_text_curr (str): 「最新出動情報」の文字列
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
 
@@ -188,7 +188,8 @@ class FwdNiigata:
 
             # 文字列解析
             matches = re.findall(
-                r"<span>(\d{2}月\d{2}日.+?。)</span>", webpage_text_curr
+                r"(\d{2}月\d{2}日\d{2}時\d{2}分頃、.+?出動しています。)",
+                webpage_text_curr,
             )
 
             for match_str in matches[::-1]:
