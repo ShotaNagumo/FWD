@@ -53,14 +53,11 @@ class FwdNiigata:
                 FwdNiigata.WEBPAGE_URL, FwdNiigata.WEBPAGE_ENC
             )
 
-            # 災害情報テキストを前処理・分割
+            # 災害情報テキストを分割
             webpage_text_div = self._split_webtext(webpage_text)
-            print(webpage_text_div[0])
-            print("-" * 120)
-            print(webpage_text_div[1])
 
             # 災害情報（現在発生している災害）をDBへ登録
-            # self._commit_disaster_list_curr(webpage_text_dev[0])
+            self._commit_disaster_list_curr(webpage_text_div[0])
 
             # 災害情報（過去の災害情報）をDBへ登録
             # self._commit_disaster_list_past(webpage_text_dev[1])
@@ -140,7 +137,7 @@ class FwdNiigata:
             return False
 
     def _split_webtext(self, webpage_text: str) -> list[str]:
-        """htmlテキストを、「現在発生している災害」が記載されている部分と「過去の災害」が記載されている部分に分割する
+        """htmlテキストを、「最新出動情報」が記載されている部分と「本日の災害発生状況」が記載されている部分に分割する
 
         Args:
             webpage_text (str): 災害情報を含むWebページのテキスト
@@ -149,10 +146,10 @@ class FwdNiigata:
             ValueError: 処理に失敗した場合
 
         Returns:
-            list[str]: [0]: 現在発生している災害の文字列、[1]: 過去の災害の文字列
+            list[str]: [0]: 最新出動情報の文字列、[1]: 本日の災害発生状況の文字列
         """
 
-        # 「現在」「過去」それぞれの災害情報を検索する
+        # 「最新」「本日」それぞれの災害情報を検索する
         pat = re.compile(
             r""".*<p id="newInfo">(.+)</p>.+<div id="todayInfo">(.+?)</div>.*""",
             re.DOTALL,
@@ -160,7 +157,7 @@ class FwdNiigata:
 
         # 検索に失敗した場合はValueErrorとする（災害情報掲示の仕様変更などの場合を想定）
         if not (m := pat.match(webpage_text)):
-            raise ValueError("現在/過去の災害情報分割失敗")
+            raise ValueError("最新/本日の災害情報分割失敗")
 
         # 検索結果を返却
         return [
@@ -544,9 +541,3 @@ class FwdNiigata:
             data["close_dt"] = ""
 
         return data
-
-
-if __name__ == "__main__":
-    instance = FwdNiigata()
-    # instance.setup()
-    instance.execute()
