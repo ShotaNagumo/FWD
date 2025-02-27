@@ -13,20 +13,24 @@ def create_table_all():
     Base.metadata.create_all(bind=util_db_manager.ENGINE)
 
 
-class TextPosition(Enum):
-    """災害情報文字列が掲載されていた位置
+class RecordType(Enum):
+    """災害発生状況の類型
 
     Args:
         Enum (_type_): Enum基底クラス
     """
 
-    """「現在発生している災害」
+    """発生
     """
-    CURR = auto()
+    HASSEI = auto()
 
-    """「過去の災害経過情報」
+    """鎮火
     """
-    PAST = auto()
+    CHINKA = auto()
+
+    """終了
+    """
+    SHURYOU = auto()
 
 
 class NotifyStatus(Enum):
@@ -117,9 +121,9 @@ class NiigataRawText(Base):
     """
     retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
-    """災害情報文字列が保存されていた位置
+    """災害発生状況の類型
     """
-    text_pos = Column(sqlalchemy.Enum(TextPosition), nullable=False)
+    record_type = Column(sqlalchemy.Enum(RecordType), nullable=False)
 
     """災害情報の通知状態
     """
