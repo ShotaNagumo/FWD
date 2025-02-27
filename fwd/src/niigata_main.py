@@ -18,7 +18,7 @@ from niigata_datamodel import (
     NiigataDisasterDetail,
     NiigataRawText,
     NotifyStatus,
-    TextPosition,
+    RecordType,
 )
 from sqlalchemy.orm.session import Session
 
@@ -114,18 +114,17 @@ class FwdNiigata:
 
                 # 災害情報テキストを前処理・分割
                 webpage_text = unicodedata.normalize("NFKC", webpage_text)
-                webpage_text = self._cleansing_webtext(webpage_text)
-                webpage_text_dev = self._split_webtext(webpage_text)
+                webpage_text_div = self._split_webtext(webpage_text)
 
                 # 災害情報（現在発生している災害）をDBへ登録
-                self._commit_disaster_list_curr(webpage_text_dev[0], retrieve_time)
+                self._commit_disaster_list_curr(webpage_text_div[0], retrieve_time)
 
                 # 災害情報（過去の災害情報）をDBへ登録
-                self._commit_disaster_list_past(webpage_text_dev[1], retrieve_time)
+                self._commit_disaster_list_chinka(webpage_text_div[0], retrieve_time)
 
             # 災害情報の解析
-            self._logger.info("災害情報の登録完了・解析開始")
-            self._analyze()
+            # self._logger.info("災害情報の登録完了・解析開始")
+            # self._analyze()
 
             # 正常終了
             self._logger.info("災害情報の解析完了")
@@ -194,7 +193,7 @@ class FwdNiigata:
                 registered = bool(
                     session.query(NiigataRawText)
                     .filter(NiigataRawText.raw_text == match_str)
-                    .filter(NiigataRawText.text_pos == TextPosition.CURR)
+                    .filter(NiigataRawText.record_type == RecordType.HASSEI)
                     .count()
                 )
 
@@ -203,8 +202,8 @@ class FwdNiigata:
                     # 登録する情報を作成する
                     raw_text_data = NiigataRawText(
                         raw_text=match_str,
+                        record_type=RecordType.HASSEI,
                         retr_dt=retrieve_dt,
-                        text_pos=TextPosition.CURR,
                         notify_status=notify_stat,
                     )
                     # DBに送信する
@@ -396,10 +395,12 @@ class FwdNiigata:
             # 状態を決定する
             status_str = m_2nd.group("status")
             if re.search(r"消防車が出動しました", status_str):
-                if raw_text_data.text_pos == TextPosition.CURR:
-                    detail_data.status = DisasterStatus.発生
-                else:
-                    detail_data.status = DisasterStatus.終了
+                # TODO: implement
+                pass
+                # if raw_text_data.text_pos == TextPosition.CURR:
+                #     detail_data.status = DisasterStatus.発生
+                # else:
+                #     detail_data.status = DisasterStatus.終了
             elif re.search(r"救助終了しました", status_str):
                 detail_data.status = DisasterStatus.救助終了
                 detail_data.close_dt = self._get_close_dt(
