@@ -212,22 +212,22 @@ class FwdNiigata:
                     # DBにコミットする
                     session.commit()
                     self._logger.info(
-                        f"「現在」の災害情報登録完了 ID=[{raw_text_data.id}]"
+                        f"「発生」の災害情報登録完了 ID=[{raw_text_data.id}]"
                     )
 
         except Exception:
             # 解析に失敗した場合はロールバックする
-            self._logger.error("「現在」の災害情報登録失敗")
+            self._logger.error("「発生」の災害情報登録失敗")
             session.rollback()
             raise
         finally:
             session.close()
 
-    def _commit_disaster_list_past(self, webpage_text_past: str, execute_dt=None):
-        """「過去の災害」の文字列を抽出してDBに登録する
+    def _commit_disaster_list_chinka(self, webpage_text_curr: str, execute_dt=None):
+        """「最新出動情報」の文字列より、鎮火情報を抽出してDBに登録する
 
         Args:
-            webpage_text_past (str): 「過去の災害」の文字列
+            webpage_text_curr (str): 「最新出動情報」の文字列
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
         session: Session = util_db_manager.SESSION()
@@ -241,14 +241,14 @@ class FwdNiigata:
 
             # 災害情報の文字列を検索する
             matches = re.findall(
-                r"<span>(\d{2}月\d{2}日.+?。)</span>", webpage_text_past
+                r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", webpage_text_curr
             )
             for match_str in matches[::-1]:
                 # 登録済みかを確認する
                 registered = bool(
                     session.query(NiigataRawText)
                     .filter(NiigataRawText.raw_text == match_str)
-                    .filter(NiigataRawText.text_pos == TextPosition.PAST)
+                    .filter(NiigataRawText.record_type == RecordType.CHINKA)
                     .count()
                 )
                 # 登録されていない場合は登録する
@@ -257,7 +257,7 @@ class FwdNiigata:
                     raw_text_data = NiigataRawText(
                         raw_text=match_str,
                         retr_dt=retrieve_dt,
-                        text_pos=TextPosition.PAST,
+                        record_type=RecordType.CHINKA,
                         notify_status=notify_stat,
                     )
                     session.add(raw_text_data)
@@ -265,12 +265,12 @@ class FwdNiigata:
                     # DBにコミットする
                     session.commit()
                     self._logger.info(
-                        f"「過去」の災害情報登録完了 ID=[{raw_text_data.id}]"
+                        f"「鎮火」の災害情報登録完了 ID=[{raw_text_data.id}]"
                     )
 
         except Exception:
             # 解析に失敗した場合はロールバックする
-            self._logger.error("「過去」の災害情報登録失敗")
+            self._logger.error("「鎮火」の災害情報登録失敗")
             session.rollback()
             raise
         finally:
