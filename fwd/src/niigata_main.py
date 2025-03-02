@@ -242,32 +242,35 @@ class FwdNiigata:
                 NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
             )
 
-            # 災害情報の文字列を検索する
-            matches = re.findall(
-                r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", webpage_text_curr
-            )
-            for match_str in matches[::-1]:
-                # 登録済みかを確認する
-                registered = bool(
-                    session.query(NiigataNoticeText)
-                    .filter(NiigataNoticeText.raw_text == match_str)
-                    .count()
+            # 入力文字列を"<br>"で分割する
+            for chinka_text in re.split(r"<br>", webpage_text_curr):
+                # 災害情報の文字列を検索する
+                matches = re.search(
+                    r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", chinka_text
                 )
-                # 登録されていない場合は登録する
-                if not registered:
-                    # 登録する情報を作成する
-                    notice_text_data = NiigataNoticeText(
-                        raw_text=match_str,
-                        retr_dt=retrieve_dt,
-                        notify_status=notify_stat,
-                    )
-                    session.add(notice_text_data)
 
-                    # DBにコミットする
-                    session.commit()
-                    self._logger.info(
-                        f"「鎮火」の災害情報登録完了 ID=[{notice_text_data.id}]"
+                if matches:
+                    # 登録済みかを確認する
+                    registered = bool(
+                        session.query(NiigataNoticeText)
+                        .filter(NiigataNoticeText.raw_text == matches.group(0))
+                        .count()
                     )
+                    # 登録されていない場合は登録する
+                    if not registered:
+                        # 登録する情報を作成する
+                        notice_text_data = NiigataNoticeText(
+                            raw_text=matches.group(0),
+                            retr_dt=retrieve_dt,
+                            notify_status=notify_stat,
+                        )
+                        session.add(notice_text_data)
+
+                        # DBにコミットする
+                        session.commit()
+                        self._logger.info(
+                            f"「鎮火」の災害情報登録完了 ID=[{notice_text_data.id}]"
+                        )
 
         except Exception:
             # 解析に失敗した場合はロールバックする
