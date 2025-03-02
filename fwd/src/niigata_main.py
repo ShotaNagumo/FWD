@@ -251,29 +251,32 @@ class FwdNiigata:
                     r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", chinka_text
                 )
 
-                if matches:
-                    # 登録済みかを確認する
-                    registered = bool(
-                        session.query(NiigataNoticeText)
-                        .filter(NiigataNoticeText.raw_text == matches.group(0))
-                        .count()
-                    )
-                    # 登録されていない場合は登録する
-                    if not registered:
-                        # 登録する情報を作成する
-                        notice_text_data = NiigataNoticeText(
-                            notice_type=NoticeType.鎮火情報,
-                            raw_text=matches.group(0),
-                            retr_dt=retrieve_dt,
-                            notify_status=notify_stat,
-                        )
-                        session.add(notice_text_data)
+                # 鎮火情報無しの場合は次へ進む
+                if not matches:
+                    continue
 
-                        # DBにコミットする
-                        session.commit()
-                        self._logger.info(
-                            f"「鎮火」の災害情報登録完了 ID=[{notice_text_data.id}]"
-                        )
+                # 登録済みかを確認する
+                registered = bool(
+                    session.query(NiigataNoticeText)
+                    .filter(NiigataNoticeText.raw_text == matches.group(0))
+                    .count()
+                )
+                # 登録されていない場合は登録する
+                if not registered:
+                    # 登録する情報を作成する
+                    notice_text_data = NiigataNoticeText(
+                        notice_type=NoticeType.鎮火情報,
+                        raw_text=matches.group(0),
+                        retr_dt=retrieve_dt,
+                        notify_status=notify_stat,
+                    )
+                    session.add(notice_text_data)
+
+                    # DBにコミットする
+                    session.commit()
+                    self._logger.info(
+                        f"「鎮火」の災害情報登録完了 ID=[{notice_text_data.id}]"
+                    )
 
         except Exception:
             # 解析に失敗した場合はロールバックする
