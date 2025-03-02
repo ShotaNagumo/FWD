@@ -16,9 +16,9 @@ from niigata_datamodel import (
     DisasterMainCategory,
     DisasterStatus,
     NiigataDisasterDetail,
+    NiigataNoticeText,
     NiigataRawText,
     NotifyStatus,
-    RecordType,
 )
 from sqlalchemy.orm.session import Session
 
@@ -136,7 +136,8 @@ class FwdNiigata:
             return False
 
     def _split_webtext(self, webpage_text: str) -> list[str]:
-        """htmlテキストを、「最新出動情報」が記載されている部分と「本日の災害発生状況」が記載されている部分に分割する
+        """htmlテキストを、「案内情報表示エリア」と「最新出動情報表示エリア」
+           に分割する
 
         Args:
             webpage_text (str): 災害情報を含むWebページのテキスト
@@ -145,23 +146,31 @@ class FwdNiigata:
             ValueError: 処理に失敗した場合
 
         Returns:
-            list[str]: [0]: 最新出動情報の文字列、[1]: 本日の災害発生状況の文字列
+            list[str]: [0]: 案内情報の文字列、[1]: 最新出動情報の文字列
         """
 
-        # 「最新」「本日」それぞれの災害情報を検索する
-        pat = re.compile(
-            r""".*<p id="newInfo">(.+)</p>.+<div id="todayInfo">(.+?)</div>.*""",
-            re.DOTALL,
+        # 案内情報表示エリアの内容を取得する
+        pat_notice = re.compile(
+            r"""(.+)<div id="topInformation"><h2>\s*(\S+?)\s*</h2>(.+)""", re.DOTALL
         )
+        if not (m_notice := pat_notice.match(webpage_text)):
+            notice_text = ""
+        else:
+            notice_text = m_notice.group(2)
 
-        # 検索に失敗した場合はValueErrorとする（災害情報掲示の仕様変更などの場合を想定）
-        if not (m := pat.match(webpage_text)):
+        # 最新出動情報エリアの内容を取得する
+        pat_curr = re.compile(
+            r"""(.+)<p id="newInfo">\s*(\S+?)\s*</p>(.+)""", re.DOTALL
+        )
+        if not (m_curr := pat_curr.match(webpage_text)):
+            # 検索に失敗した場合はValueErrorとする（災害情報掲示の仕様変更などの場合を想定）
             raise ValueError("最新/本日の災害情報分割失敗")
+        curr_text = m_curr.group(2)
 
         # 検索結果を返却
         return [
-            m.group(1),
-            m.group(2),
+            notice_text,
+            curr_text,
         ]
 
     def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
