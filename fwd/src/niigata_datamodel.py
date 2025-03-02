@@ -56,6 +56,10 @@ class DisasterMainCategory(Enum):
     """
     救急支援 = auto()
 
+    """応援
+    """
+    応援 = auto()
+
     """その他
     """
     その他 = auto()
@@ -75,6 +79,37 @@ class DisasterStatus(Enum):
     """終了
     """
     終了 = auto()
+
+
+class NiigataNoticeText(Base):
+    """「発生」「終了」以外の情報（:=案内情報）を格納するテーブル
+    1. 鎮火情報
+    2. ページ上部に表示される案内
+       （訓練、障害、緊援隊派遣等の情報）
+    """
+
+    """テーブル名
+    """
+    __tablename__ = "niigata_notice_text"
+
+    """NiigataInfoText ID
+    """
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    """案内情報文字列
+    """
+    raw_text = Column(String, nullable=False)
+
+    """取得時刻
+    （過去データから取得した場合は、過去データが記録されているファイル名から取得した日付）
+    """
+    retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
+
+    """案内情報の通知状態
+    """
+    notify_status = Column(
+        sqlalchemy.Enum(NotifyStatus), nullable=False, default=NotifyStatus.NOT_YET
+    )
 
 
 class NiigataRawText(Base):
@@ -106,37 +141,6 @@ class NiigataRawText(Base):
     """詳細テーブルのオブジェクト
     """
     detail_info = relationship("NiigataDisasterDetail", uselist=False)
-
-
-class NiigataInfoText(Base):
-    """「発生」「終了」以外の情報（:=案内情報）を格納するテーブル
-    1. 鎮火情報
-    2. ページ上部に表示される案内
-       （訓練、障害、緊援隊派遣等の情報）
-    """
-
-    """テーブル名
-    """
-    __tablename__ = "niigata_info_text"
-
-    """NiigataInfoText ID
-    """
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    """案内情報文字列
-    """
-    raw_text = Column(String, nullable=False)
-
-    """取得時刻
-    （過去データから取得した場合は、過去データが記録されているファイル名から取得した日付）
-    """
-    retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
-
-    """案内情報の通知状態
-    """
-    notify_status = Column(
-        sqlalchemy.Enum(NotifyStatus), nullable=False, default=NotifyStatus.NOT_YET
-    )
 
 
 class NiigataDisasterDetail(Base):
