@@ -18,6 +18,7 @@ from niigata_datamodel import (
     NiigataDisasterDetail,
     NiigataNoticeText,
     NiigataRawText,
+    NoticeType,
     NotifyStatus,
 )
 from sqlalchemy.orm.session import Session
@@ -207,6 +208,7 @@ class FwdNiigata:
             if not registered:
                 # 登録する情報を作成する
                 notice_text_data = NiigataNoticeText(
+                    notice_type=NoticeType.一般案内,
                     raw_text=webpage_text_notice,
                     retr_dt=retrieve_dt,
                     notify_status=notify_stat,
@@ -260,6 +262,7 @@ class FwdNiigata:
                     if not registered:
                         # 登録する情報を作成する
                         notice_text_data = NiigataNoticeText(
+                            notice_type=NoticeType.鎮火情報,
                             raw_text=matches.group(0),
                             retr_dt=retrieve_dt,
                             notify_status=notify_stat,

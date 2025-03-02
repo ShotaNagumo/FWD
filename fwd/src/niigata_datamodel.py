@@ -81,6 +81,22 @@ class DisasterStatus(Enum):
     終了 = auto()
 
 
+class NoticeType(Enum):
+    """案内情報種別
+
+    Args:
+        Enum (_type_): Enum基底クラス
+    """
+
+    """一般案内
+    """
+    一般案内 = auto()
+
+    """鎮火情報
+    """
+    鎮火情報 = auto()
+
+
 class NiigataNoticeText(Base):
     """「発生」「終了」以外の情報（:=案内情報）を格納するテーブル
     1. 鎮火情報
@@ -95,6 +111,10 @@ class NiigataNoticeText(Base):
     """NiigataInfoText ID
     """
     id = Column(Integer, primary_key=True, autoincrement=True)
+
+    """案内情報種別
+    """
+    notice_type = Column(sqlalchemy.Enum(NoticeType), nullable=False)
 
     """案内情報文字列
     """
