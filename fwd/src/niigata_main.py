@@ -119,6 +119,9 @@ class FwdNiigata:
                 # 案内情報をDBへ登録する
                 self._commit_disaster_list_notice(webpage_text_div[0], retrieve_time)
 
+                # 鎮火情報をDBへ登録する
+                self._commit_disaster_list_chinka(webpage_text_div[1], retrieve_time)
+
                 # 災害情報をDBへ登録する
                 self._commit_disaster_list_curr(webpage_text_div[1], retrieve_time)
 
@@ -223,6 +226,57 @@ class FwdNiigata:
         finally:
             session.close()
 
+    def _commit_disaster_list_chinka(self, webpage_text_curr: str, execute_dt=None):
+        """「最新出動情報」の文字列より、鎮火情報を抽出してDBに登録する
+
+        Args:
+            webpage_text_curr (str): 「最新出動情報」の文字列
+            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
+        """
+        session: Session = util_db_manager.SESSION()
+
+        try:
+            # execute_dt の指定状況に応じ、登録する情報を決定する
+            retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
+            notify_stat = (
+                NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
+            )
+
+            # 災害情報の文字列を検索する
+            matches = re.findall(
+                r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", webpage_text_curr
+            )
+            for match_str in matches[::-1]:
+                # 登録済みかを確認する
+                registered = bool(
+                    session.query(NiigataNoticeText)
+                    .filter(NiigataNoticeText.raw_text == match_str)
+                    .count()
+                )
+                # 登録されていない場合は登録する
+                if not registered:
+                    # 登録する情報を作成する
+                    notice_text_data = NiigataNoticeText(
+                        raw_text=match_str,
+                        retr_dt=retrieve_dt,
+                        notify_status=notify_stat,
+                    )
+                    session.add(notice_text_data)
+
+                    # DBにコミットする
+                    session.commit()
+                    self._logger.info(
+                        f"「鎮火」の災害情報登録完了 ID=[{notice_text_data.id}]"
+                    )
+
+        except Exception:
+            # 解析に失敗した場合はロールバックする
+            self._logger.error("「鎮火」の災害情報登録失敗")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
         """「最新出動情報」の文字列より、災害発生状況を抽出してDBに登録する
 
@@ -277,59 +331,6 @@ class FwdNiigata:
         except Exception:
             # 解析に失敗した場合はロールバックする
             self._logger.error("「発生」の災害情報登録失敗")
-            session.rollback()
-            raise
-        finally:
-            session.close()
-
-    def _commit_disaster_list_chinka(self, webpage_text_curr: str, execute_dt=None):
-        """「最新出動情報」の文字列より、鎮火情報を抽出してDBに登録する
-
-        Args:
-            webpage_text_curr (str): 「最新出動情報」の文字列
-            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
-        """
-        session: Session = util_db_manager.SESSION()
-
-        try:
-            # execute_dt の指定状況に応じ、登録する情報を決定する
-            retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
-            notify_stat = (
-                NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
-            )
-
-            # 災害情報の文字列を検索する
-            matches = re.findall(
-                r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", webpage_text_curr
-            )
-            for match_str in matches[::-1]:
-                # 登録済みかを確認する
-                registered = bool(
-                    session.query(NiigataRawText)
-                    .filter(NiigataRawText.raw_text == match_str)
-                    .filter(NiigataRawText.record_type == RecordType.CHINKA)
-                    .count()
-                )
-                # 登録されていない場合は登録する
-                if not registered:
-                    # 登録する情報を作成する
-                    raw_text_data = NiigataRawText(
-                        raw_text=match_str,
-                        retr_dt=retrieve_dt,
-                        record_type=RecordType.CHINKA,
-                        notify_status=notify_stat,
-                    )
-                    session.add(raw_text_data)
-
-                    # DBにコミットする
-                    session.commit()
-                    self._logger.info(
-                        f"「鎮火」の災害情報登録完了 ID=[{raw_text_data.id}]"
-                    )
-
-        except Exception:
-            # 解析に失敗した場合はロールバックする
-            self._logger.error("「鎮火」の災害情報登録失敗")
             session.rollback()
             raise
         finally:
