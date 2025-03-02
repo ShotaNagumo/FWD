@@ -306,7 +306,6 @@ class FwdNiigata:
                 registered = bool(
                     session.query(NiigataRawText)
                     .filter(NiigataRawText.raw_text == match_str)
-                    .filter(NiigataRawText.record_type == RecordType.HASSEI)
                     .count()
                 )
 
@@ -315,7 +314,6 @@ class FwdNiigata:
                     # 登録する情報を作成する
                     raw_text_data = NiigataRawText(
                         raw_text=match_str,
-                        record_type=RecordType.HASSEI,
                         retr_dt=retrieve_dt,
                         notify_status=notify_stat,
                     )
