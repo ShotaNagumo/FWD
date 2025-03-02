@@ -3,7 +3,7 @@ import logging
 import re
 import unicodedata
 from pathlib import Path
-from typing import Final, Optional
+from typing import Final
 
 import common_datamodel
 import niigata_datamodel
@@ -388,13 +388,14 @@ class FwdNiigata:
             # raw_text_idを設定する
             detail_data.raw_text_id = raw_text_data.id
 
-            # 一回目の解析（発生時刻、都市名を解析する）
+            # 一回目の解析（住所詳細以外の情報を解析する）
             m_1st = re.match(
-                r"(?P<month>\d{2})月(?P<day>\d{2})日 (?P<hour>\d{2}):(?P<minute>\d{2}) (?P<city>\S+?) (?P<next>.+)。$",
+                r"(?P<month>\d{2})月(?P<day>\d{2})日(?P<hour>\d{2})時(?P<minute>\d{2})分頃、"
+                r"(?P<address>\S+?)付近で(?P<category>\S+?)のため出動しています。$",
                 raw_text_data.raw_text,
             )
             if not m_1st:
-                raise ValueError("一回目の解析失敗")
+                raise ValueError("一回目の解析失敗（発生文字列）")
 
             # 災害発生時刻の年を決定する
             # 基本的にはanalyze_dt の年を設定するが、
@@ -404,7 +405,7 @@ class FwdNiigata:
             if raw_text_data.retr_dt.month < int(m_1st.group("month")):
                 open_year -= 1
 
-            # 災害発生時刻を決定する
+            # 災害発生時刻を設定する
             detail_data.open_dt = datetime.datetime(
                 year=open_year,
                 month=int(m_1st.group("month")),
@@ -412,6 +413,29 @@ class FwdNiigata:
                 hour=int(m_1st.group("hour")),
                 minute=int(m_1st.group("minute")),
             )
+
+            # 災害種別を設定する
+            category_str = m_1st.group("category")
+            if re.search("火災", category_str):
+                detail_data.main_category = DisasterMainCategory.火災
+            elif re.search("救助", category_str):
+                detail_data.main_category = DisasterMainCategory.救助
+            elif re.search("警戒", category_str):
+                detail_data.main_category = DisasterMainCategory.警戒
+            elif re.search("救急", category_str):
+                detail_data.main_category = DisasterMainCategory.救急支援
+            else:
+                detail_data.main_category = DisasterMainCategory.その他
+
+            # 災害状態（ここでは「発生」固定）
+            detail_data.status = DisasterStatus.発生
+
+            # 二回目の解析（住所詳細）
+            # TODO implement
+            detail_data.address1 = "仮1"
+            detail_data.address2 = "仮2"
+            detail_data.address3 = "仮3"
+            return detail_data
 
             # 都市名を決定する
             # "長岡市"以外の場合はその都市名を設定し、"長岡市"の場合はNoneを設定
@@ -427,22 +451,6 @@ class FwdNiigata:
             if not m_2nd:
                 raise ValueError("二回目の解析失敗")
 
-            # 災害種別を決定する
-            category_str = m_2nd.group("category")
-            if re.search(r"火災", category_str):
-                detail_data.main_category = DisasterMainCategory.火災
-            elif re.search(r"救助", category_str):
-                detail_data.main_category = DisasterMainCategory.救助
-            elif re.search(r"警戒", category_str):
-                detail_data.main_category = DisasterMainCategory.警戒
-            elif re.search(r"救急", category_str):
-                detail_data.main_category = DisasterMainCategory.救急支援
-            else:
-                detail_data.main_category = DisasterMainCategory.その他
-
-            # 災害種別詳細を設定する
-            detail_data.sub_category = category_str
-
             # 住所を空白で分割しaddress2とaddress3を設定する
             # address3に該当する部分が無い場合はNULLとする
             addr2, addr3 = m_2nd.group("address").split(" ")
@@ -450,80 +458,13 @@ class FwdNiigata:
             if addr3:
                 detail_data.address3 = addr3
 
-            # 状態を決定する
-            status_str = m_2nd.group("status")
-            if re.search(r"消防車が出動しました", status_str):
-                # TODO: implement
-                pass
-                # if raw_text_data.text_pos == TextPosition.CURR:
-                #     detail_data.status = DisasterStatus.発生
-                # else:
-                #     detail_data.status = DisasterStatus.終了
-            elif re.search(r"救助終了しました", status_str):
-                detail_data.status = DisasterStatus.救助終了
-                detail_data.close_dt = self._get_close_dt(
-                    status_str, detail_data.open_dt
-                )
-            elif re.search(r"消火の必要はありませんでした", status_str):
-                detail_data.status = DisasterStatus.消火不要
-            elif re.search(r"鎮圧しました", status_str):
-                detail_data.status = DisasterStatus.鎮圧
-                detail_data.close_dt = self._get_close_dt(
-                    status_str, detail_data.open_dt
-                )
-            elif re.search(r"鎮火しました", status_str):
-                detail_data.status = DisasterStatus.鎮火
-                detail_data.close_dt = self._get_close_dt(
-                    status_str, detail_data.open_dt
-                )
-            else:
-                detail_data.status = DisasterStatus.終了
             # 解析結果を返却する
-
             return detail_data
 
         except Exception:
             # 解析に失敗した場合
             self._logger.error("災害文字列の解析に失敗")
             raise
-
-    def _get_close_dt(
-        self, status_str: str, open_dt: datetime.datetime
-    ) -> Optional[datetime.datetime]:
-        """災害終了時刻を解析する
-
-        Args:
-            status_str (str): 終了時刻が含まれた文字列
-            open_dt (datetime.datetime): 災害発生時刻情報
-
-        Returns:
-            Optional[datetime.datetime]: 災害終了時刻情報。含まれていなかった場合はNone。
-        """
-        # 文字列から災害終了時刻の時・分を解析する
-        close_dt_m = re.match(r"(?P<hour>\d{2}):(?P<minute>\d{2}).+$", status_str)
-
-        # 災害終了時刻を決定する
-        if not close_dt_m:
-            # 災害終了時刻が記載されていない場合はNoneを返却する
-            return None
-        else:
-            # 災害発生時刻、文字列解析結果を考慮して終了時刻を決定する
-
-            # いったん、災害発生と同日に終了したものとして時刻を設定する
-            close_dt = datetime.datetime(
-                year=open_dt.year,
-                month=open_dt.month,
-                day=open_dt.day,
-                hour=int(close_dt_m.group("hour")),
-                minute=int(close_dt_m.group("minute")),
-            )
-
-            # close_dt < open_dt の場合は、翌日に終了したとして一日進める
-            if close_dt < open_dt:
-                close_dt += datetime.timedelta(days=1)
-
-            # 終了時刻を返却する
-            return close_dt
 
     def _notify(self):
         """通知処理を実行する"""
