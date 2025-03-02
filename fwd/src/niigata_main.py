@@ -116,11 +116,11 @@ class FwdNiigata:
                 webpage_text = unicodedata.normalize("NFKC", webpage_text)
                 webpage_text_div = self._split_webtext(webpage_text)
 
-                # 災害情報（現在発生している災害）をDBへ登録
-                self._commit_disaster_list_curr(webpage_text_div[0], retrieve_time)
+                # 案内情報をDBへ登録する
+                self._commit_disaster_list_notice(webpage_text_div[0], retrieve_time)
 
-                # 災害情報（過去の災害情報）をDBへ登録
-                self._commit_disaster_list_chinka(webpage_text_div[0], retrieve_time)
+                # 災害情報をDBへ登録する
+                self._commit_disaster_list_curr(webpage_text_div[1], retrieve_time)
 
             # 災害情報の解析
             # self._logger.info("災害情報の登録完了・解析開始")
@@ -172,6 +172,56 @@ class FwdNiigata:
             notice_text,
             curr_text,
         ]
+
+    def _commit_disaster_list_notice(self, webpage_text_notice: str, execute_dt=None):
+        """案内情報をDBに登録する
+
+        Args:
+            webpage_text_notice (str): 案内情報の文字列
+            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
+        """
+
+        session = util_db_manager.SESSION()
+        try:
+            # 案内情報が空の場合は処理不要
+            if not webpage_text_notice:
+                return
+
+            # execute_dt の指定状況に応じ、登録する情報を決定する
+            retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
+            notify_stat = (
+                NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
+            )
+
+            # 登録済みかを確認する
+            registered = bool(
+                session.query(NiigataNoticeText)
+                .filter(NiigataNoticeText.raw_text == webpage_text_notice)
+                .count()
+            )
+
+            # 登録されていない場合は登録する
+            if not registered:
+                # 登録する情報を作成する
+                notice_text_data = NiigataNoticeText(
+                    raw_text=webpage_text_notice,
+                    retr_dt=retrieve_dt,
+                    notify_status=notify_stat,
+                )
+                # DBに送信する
+                session.add(notice_text_data)
+
+                # DBにコミットする
+                session.commit()
+                self._logger.info(f"案内情報登録完了 ID=[{notice_text_data.id}]")
+
+        except Exception:
+            # 解析に失敗した場合はロールバックする
+            self._logger.error("案内情報情報登録失敗")
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
         """「最新出動情報」の文字列より、災害発生状況を抽出してDBに登録する
