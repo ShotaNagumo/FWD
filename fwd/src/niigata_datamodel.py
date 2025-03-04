@@ -185,7 +185,7 @@ class NiigataDisasterDetail(Base):
     status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
     """住所1（区名/道路名）
     """
-    address1 = Column(String, nullable=True)
+    address1 = Column(String, nullable=False)
     """住所2（町名/道路方向）
     """
     address2 = Column(String, nullable=False)
