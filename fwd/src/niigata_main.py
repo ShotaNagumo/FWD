@@ -431,6 +431,8 @@ class FwdNiigata:
                 detail_data.main_category = DisasterMainCategory.警戒
             elif re.search("救急", category_str):
                 detail_data.main_category = DisasterMainCategory.救急支援
+            elif re.search("応援", category_str):
+                detail_data.main_category = DisasterMainCategory.応援
             else:
                 detail_data.main_category = DisasterMainCategory.その他
 
