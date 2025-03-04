@@ -440,10 +440,26 @@ class FwdNiigata:
             detail_data.status = DisasterStatus.発生
 
             # 二回目の解析（住所詳細）
-            # TODO implement
-            detail_data.address1 = "仮1"
-            detail_data.address2 = "仮2"
-            detail_data.address3 = "仮3"
+            # パターン1：〇区〇町（N丁目）の場合
+            if m_2nd_1 := re.search(
+                r"(?P<district>\S+区)(?P<town>\S+)", m_1st.group("address")
+            ):
+                # 区名を設定する
+                detail_data.address1 = m_2nd_1.group("district")
+                if m_2nd_1_town := re.match(
+                    r"(?P<town>\S+?)(?P<chome>\d+丁目)", m_2nd_1.group("town")
+                ):
+                    # 〇町N丁目の場合
+                    detail_data.address2 = m_2nd_1_town.group("town")
+                    detail_data.address3 = m_2nd_1_town.group("chome")
+                else:
+                    # 〇町の場合
+                    detail_data.address2 = m_2nd_1.group("town")
+            else:
+                # TODO implement
+                detail_data.address1 = "仮1"
+                detail_data.address2 = "仮2"
+                detail_data.address3 = "仮3"
             return detail_data
 
             # 都市名を決定する
