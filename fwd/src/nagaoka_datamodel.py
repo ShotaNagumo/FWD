@@ -20,13 +20,13 @@ class TextPosition(Enum):
         Enum (_type_): Enum基底クラス
     """
 
+    CURR = auto()
     """「現在発生している災害」
     """
-    CURR = auto()
 
+    PAST = auto()
     """「過去の災害経過情報」
     """
-    PAST = auto()
 
 
 class NotifyStatus(Enum):
@@ -36,17 +36,17 @@ class NotifyStatus(Enum):
         Enum (_type_): Enum基底クラス
     """
 
+    SKIPPED = auto()
     """通知不要
     """
-    SKIPPED = auto()
 
+    NOT_YET = auto()
     """通知未
     """
-    NOT_YET = auto()
 
+    NOTIFIED = auto()
     """通知済み
     """
-    NOTIFIED = auto()
 
 
 class DisasterMainCategory(Enum):
@@ -56,25 +56,25 @@ class DisasterMainCategory(Enum):
         Enum (_type_): Enum基底クラス
     """
 
+    火災 = auto()
     """火災
     """
-    火災 = auto()
 
+    救助 = auto()
     """救助
     """
-    救助 = auto()
 
+    警戒 = auto()
     """警戒
     """
-    警戒 = auto()
 
+    救急支援 = auto()
     """救急支援
     """
-    救急支援 = auto()
 
+    その他 = auto()
     """その他
     """
-    その他 = auto()
 
 
 class DisasterStatus(Enum):
@@ -84,95 +84,103 @@ class DisasterStatus(Enum):
         Enum (_type_): Enum基底クラス
     """
 
+    発生 = auto()
     """災害発生
     """
-    発生 = auto()
 
+    救助終了 = auto()
     """救助終了
     """
-    救助終了 = auto()
 
+    消火不要 = auto()
     """消火不要
     """
-    消火不要 = auto()
 
+    鎮圧 = auto()
     """鎮圧
     """
-    鎮圧 = auto()
 
+    鎮火 = auto()
     """鎮火
     """
-    鎮火 = auto()
 
+    終了 = auto()
     """終了
     """
-    終了 = auto()
 
 
 class NagaokaRawText(Base):
     """災害情報を格納するテーブル"""
 
+    __tablename__ = "nagaoka_raw_text"
     """テーブル名
     """
-    __tablename__ = "nagaoka_raw_text"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     """NagaokaRawText ID
     """
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
+    raw_text = Column(String, nullable=False)
     """災害情報文字列
     """
-    raw_text = Column(String, nullable=False)
 
+    retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
     """取得時刻
     （過去データから取得した場合は、過去データが記録されているファイル名から取得した日付）
     """
-    retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
+    text_pos = Column(sqlalchemy.Enum(TextPosition), nullable=False)
     """災害情報文字列が保存されていた位置
     """
-    text_pos = Column(sqlalchemy.Enum(TextPosition), nullable=False)
 
-    """災害情報の通知状態
-    """
     notify_status = Column(
         sqlalchemy.Enum(NotifyStatus), nullable=False, default=NotifyStatus.NOT_YET
     )
+    """災害情報の通知状態
+    """
 
+    detail_info = relationship("NagaokaDisasterDetail", uselist=False)
     """詳細テーブルのオブジェクト
     """
-    detail_info = relationship("NagaokaDisasterDetail", uselist=False)
 
 
 class NagaokaDisasterDetail(Base):
     __tablename__ = "nagaoka_disaster_detail"
 
-    """ "nagaoka_raw_text"テーブルのID
-    """
     raw_text_id = Column(
         Integer, ForeignKey("nagaoka_raw_text.id", ondelete="CASCADE"), primary_key=True
     )
+    """ "nagaoka_raw_text"テーブルのID
+    """
+
+    main_category = Column(sqlalchemy.Enum(DisasterMainCategory), nullable=False)
     """災害種別
     """
-    main_category = Column(sqlalchemy.Enum(DisasterMainCategory), nullable=False)
+
+    sub_category = Column(String, nullable=True)
     """災害種別詳細
     """
-    sub_category = Column(String, nullable=True)
+
+    open_dt = Column(DateTime, nullable=False)
     """災害発生時刻
     """
-    open_dt = Column(DateTime, nullable=False)
+
+    close_dt = Column(DateTime, nullable=True)
     """災害終了時刻
     """
-    close_dt = Column(DateTime, nullable=True)
+
+    status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
     """災害状態
     """
-    status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
+
+    address1 = Column(String, nullable=True)
     """住所1（長岡市以外の場合の都市名）
     """
-    address1 = Column(String, nullable=True)
+
+    address2 = Column(String, nullable=False)
     """住所2（町名、道路名）
     """
-    address2 = Column(String, nullable=False)
+
+    address3 = Column(String, nullable=True)
     """住所3（丁目、道路方向）
     """
-    address3 = Column(String, nullable=True)
