@@ -163,12 +163,10 @@ class FwdNiigata:
             notice_text = m_notice.group(2)
 
         # 最新出動情報エリアの内容を取得する
-        pat_curr = re.compile(
-            r"""(.+)<p id="newInfo">\s*(\S+?)\s*</p>(.+)""", re.DOTALL
-        )
+        pat_curr = re.compile(r"""(.+)<p id="newInfo">(.+?)</p>(.+)""", re.DOTALL)
         if not (m_curr := pat_curr.match(webpage_text)):
             # 検索に失敗した場合はValueErrorとする（災害情報掲示の仕様変更などの場合を想定）
-            raise ValueError("最新/本日の災害情報分割失敗")
+            raise ValueError("案内情報/最新出動情報の災害情報分割失敗")
         curr_text = m_curr.group(2)
 
         # 検索結果を返却
