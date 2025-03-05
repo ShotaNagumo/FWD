@@ -398,7 +398,7 @@ class FwdNiigata:
             # 一回目の解析（住所詳細以外の情報を解析する）
             m_1st = re.match(
                 r"(?P<month>\d{2})月(?P<day>\d{2})日(?P<hour>\d{2})時(?P<minute>\d{2})分頃、"
-                r"(?P<address>\S+?)付近で(?P<category>\S+?)のため出動しています。$",
+                r"(?P<address>.+?)付近で(?P<category>\S+?)のため出動しています。$",
                 raw_text_data.raw_text,
             )
             if not m_1st:
