@@ -467,7 +467,7 @@ class FwdNiigata:
                 detail_data.address1 = m_addr_2.group("road")
                 # address2：方向
                 detail_data.address2 = m_addr_2.group("direction")
-                # address3：始点〜終点
+                # address3：始点->終点
                 # TODO 欠けている地点名の補完
                 detail_data.address3 = (
                     f"{m_addr_2.group('start')}->{m_addr_2.group('end')}"
@@ -485,6 +485,22 @@ class FwdNiigata:
                 _addr3 = re.sub("北陸自動車道", "", m_addr_3.group("road"))
                 _addr3 = re.sub("北陸道", "", _addr3)
                 _addr3 = re.sub(m_addr_3.group("direction"), "", _addr3)
+                _addr3 = re.sub(r"\s", "", _addr3)
+                # TODO 欠けている地点名の補完
+                detail_data.address3 = _addr3
+            elif m_addr_4 := re.match(
+                r"磐越自動車道(?P<direction>(上|下)り)(?P<road>.+)",
+                m_1st.group("address"),
+            ):
+                # パターン4：高速道（磐越道）
+                # address1：道路名（磐越道）
+                detail_data.address1 = "磐越道"
+                # address2：方向
+                detail_data.address2 = m_addr_4.group("direction")
+                # address3："road"マッチ部分から道路名、方向を削除し残った部分
+                _addr3 = re.sub("磐越自動車道", "", m_addr_4.group("road"))
+                _addr3 = re.sub("磐越道", "", _addr3)
+                _addr3 = re.sub(m_addr_4.group("direction"), "", _addr3)
                 _addr3 = re.sub(r"\s", "", _addr3)
                 # TODO 欠けている地点名の補完
                 detail_data.address3 = _addr3
