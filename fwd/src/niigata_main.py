@@ -504,6 +504,28 @@ class FwdNiigata:
                 _addr3 = re.sub(r"\s", "", _addr3)
                 # TODO 欠けている地点名の補完
                 detail_data.address3 = _addr3
+            elif m_addr_5 := re.match(
+                r"日本海東北自動車道(?P<direction_symbol>(△|▼))(?P<road>.+)",
+                m_1st.group("address"),
+            ):
+                # パターン5：高速道（日東道）
+                # address1：道路名（日東道）
+                detail_data.address1 = "日東道"
+                # address2：方向
+                if m_addr_5.group("direction_symbol") == "△":
+                    detail_data.address2 = "上り"
+                else:
+                    detail_data.address2 = "下り"
+                # address3："road"マッチ部分から道路名、方向を削除し残った部分
+                _addr3 = re.sub("日本海東北自動車道", "", m_addr_5.group("road"))
+                _addr3 = re.sub("日東道", "", _addr3)
+                _addr3 = re.sub("上", "", _addr3)
+                _addr3 = re.sub("下", "", _addr3)
+                _addr3 = re.sub("り", "", _addr3)
+                _addr3 = re.sub(r"\s", "", _addr3)
+                if _addr3:
+                    # TODO 欠けている地点名の補完
+                    detail_data.address3 = _addr3
             else:
                 # TODO implement
                 detail_data.address1 = "仮1"
