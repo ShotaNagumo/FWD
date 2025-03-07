@@ -468,10 +468,12 @@ class FwdNiigata:
                 # address2：方向
                 detail_data.address2 = m_addr_2.group("direction")
                 # address3：始点->終点
-                # TODO 欠けている地点名の補完
-                detail_data.address3 = (
-                    f"{m_addr_2.group('start')}->{m_addr_2.group('end')}"
-                )
+                _start = m_addr_2.group("start")
+                _end = m_addr_2.group("end")
+                _end = re.sub("方", "", _end)
+                _end = re.sub("向", "", _end)
+                _end = self._complement_address(_end)
+                detail_data.address3 = f"{_start}->{_end}"
             elif m_addr_3 := re.match(
                 r"北陸自動車道(?P<direction>(上|下)り)(?P<road>.+)",
                 m_1st.group("address"),
@@ -486,7 +488,7 @@ class FwdNiigata:
                 _addr3 = re.sub("北陸道", "", _addr3)
                 _addr3 = re.sub(m_addr_3.group("direction"), "", _addr3)
                 _addr3 = re.sub(r"\s", "", _addr3)
-                # TODO 欠けている地点名の補完
+                _addr3 = self._complement_address(_addr3)
                 detail_data.address3 = _addr3
             elif m_addr_4 := re.match(
                 r"磐越自動車道(?P<direction>(上|下)り)(?P<road>.+)",
@@ -502,7 +504,7 @@ class FwdNiigata:
                 _addr3 = re.sub("磐越道", "", _addr3)
                 _addr3 = re.sub(m_addr_4.group("direction"), "", _addr3)
                 _addr3 = re.sub(r"\s", "", _addr3)
-                # TODO 欠けている地点名の補完
+                _addr3 = self._complement_address(_addr3)
                 detail_data.address3 = _addr3
             elif m_addr_5 := re.match(
                 r"日本海東北自動車道(?P<direction_symbol>(△|▼))(?P<road>.+)",
@@ -524,7 +526,7 @@ class FwdNiigata:
                 _addr3 = re.sub("り", "", _addr3)
                 _addr3 = re.sub(r"\s", "", _addr3)
                 if _addr3:
-                    # TODO 欠けている地点名の補完
+                    _addr3 = self._complement_address(_addr3)
                     detail_data.address3 = _addr3
             elif m_addr_6 := re.match(
                 r"角田山(?P<point>.+)",
@@ -537,7 +539,6 @@ class FwdNiigata:
                 _addr2 = re.sub("角田山", "", m_addr_6.group("point"))
                 _addr2 = re.sub(r"\s", "", _addr2)
                 if _addr2:
-                    # TODO 欠けている地点名の補完
                     detail_data.address2 = _addr2
             elif m_addr_7 := re.match(
                 r"みなとTN(?P<direction>.+?行き)(.+)",
@@ -572,6 +573,18 @@ class FwdNiigata:
             # 解析に失敗した場合
             self._logger.error("災害文字列の解析に失敗")
             raise
+
+    def _complement_address(self, target_address: str) -> str:
+        """不完全な住所を補完する
+
+        Args:
+            target_address (str): 補完対象の住所
+
+        Returns:
+            str: 補完後の住所
+        """
+        # TODO implement
+        return target_address
 
     def _notify(self):
         """通知処理を実行する"""
