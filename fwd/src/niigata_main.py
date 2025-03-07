@@ -470,8 +470,10 @@ class FwdNiigata:
                 # address3：始点->終点
                 _start = m_addr_2.group("start")
                 _end = m_addr_2.group("end")
+                _end = re.sub("方向車線", "", _end)
+                _end = re.sub("方向車", "", _end)
+                _end = re.sub("方向", "", _end)
                 _end = re.sub("方", "", _end)
-                _end = re.sub("向", "", _end)
                 _end = self._complement_address(_end)
                 detail_data.address3 = f"{_start}->{_end}"
             elif m_addr_3 := re.match(
