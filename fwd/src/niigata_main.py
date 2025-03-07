@@ -526,6 +526,35 @@ class FwdNiigata:
                 if _addr3:
                     # TODO 欠けている地点名の補完
                     detail_data.address3 = _addr3
+            elif m_addr_6 := re.match(
+                r"角田山(?P<point>.+)",
+                m_1st.group("address"),
+            ):
+                # パターン6：角田山
+                # address1：地点名（角田山）
+                detail_data.address1 = "角田山"
+                # address2："point"マッチ部分から"角田山"等を削除して残った部分
+                _addr2 = re.sub("角田山", "", m_addr_6.group("point"))
+                _addr2 = re.sub(r"\s", "", _addr2)
+                if _addr2:
+                    # TODO 欠けている地点名の補完
+                    detail_data.address2 = _addr2
+            elif m_addr_7 := re.match(
+                r"みなとTN(?P<direction>.+?行き)(.+)",
+                m_1st.group("address"),
+            ):
+                # パターン7：みなとトンネル
+                # address1：道路名（みなとトンネル）
+                detail_data.address1 = "みなとトンネル"
+                # address2：directionマッチ部分
+                detail_data.address2 = m_addr_7.group("direction")
+            elif m_addr_8 := re.match(
+                r"トンネル(?P<tunnel>.+)",
+                m_1st.group("address"),
+            ):
+                # パターン8：みなとトンネル以外のトンネル
+                # address1：トンネル名
+                detail_data.address1 = m_addr_8.group("tunnel")
             else:
                 # TODO implement
                 detail_data.address1 = "仮1"
