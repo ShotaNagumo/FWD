@@ -196,7 +196,7 @@ class NiigataDisasterDetail(Base):
     """住所1（区名/道路名）
     """
 
-    address2 = Column(String, nullable=False)
+    address2 = Column(String, nullable=True)
     """住所2（町名/道路方向）
     """
 
