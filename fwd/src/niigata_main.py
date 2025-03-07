@@ -556,32 +556,14 @@ class FwdNiigata:
                 # address1：トンネル名
                 detail_data.address1 = m_addr_8.group("tunnel")
             else:
-                # TODO implement
-                detail_data.address1 = "仮1"
-                detail_data.address2 = "仮2"
-                detail_data.address3 = "仮3"
-            return detail_data
-
-            # 都市名を決定する
-            # "長岡市"以外の場合はその都市名を設定し、"長岡市"の場合はNoneを設定
-            detail_data.address1 = (
-                m_1st.group("city") if m_1st.group("city") != "長岡市" else None
-            )
-
-            # 二回目の解析（災害種別、住所、状態を解析する）
-            m_2nd = re.match(
-                r"(?P<address>.+?)(に|の)(?P<category>\S+?)(は|のため)(?P<status>.+)$",
-                m_1st.group("next"),
-            )
-            if not m_2nd:
-                raise ValueError("二回目の解析失敗")
-
-            # 住所を空白で分割しaddress2とaddress3を設定する
-            # address3に該当する部分が無い場合はNULLとする
-            addr2, addr3 = m_2nd.group("address").split(" ")
-            detail_data.address2 = addr2
-            if addr3:
-                detail_data.address3 = addr3
+                # パターン9：その他（市外など）
+                _addr1 = m_1st.group("address")
+                detail_data.address1 = _addr1
+                if len(_addr1) % 2 == 0:
+                    mid = len(_addr1) // 2
+                    if _addr1[:mid] == _addr1[mid:]:
+                        # 住所の前半と後半が同一内容ならその部分だけ登録する
+                        detail_data.address1 = _addr1[:mid]
 
             # 解析結果を返却する
             return detail_data
