@@ -11,6 +11,7 @@ import sqlalchemy
 import util_config
 import util_db_manager
 import util_request_wrapper
+import yaml
 from jinja2 import Environment, FileSystemLoader
 from niigata_datamodel import (
     DisasterMainCategory,
@@ -30,10 +31,23 @@ class FwdNiigata:
 
     def __init__(self):
         """コンストラクタ"""
+        # logger
         self._logger = logging.getLogger("fwd.niigata")
+
+        # 通知文テンプレート
         _template_dir = util_config.get_resource_dir() / "niigata" / "template"
         self._j2_env = Environment(loader=FileSystemLoader(_template_dir))
+
+        # 通知URL
         self._webhook_url = util_config.get_webhook_url("niigata")
+
+        # 住所補完定義
+        _complement_dict_path = (
+            util_config.get_resource_dir() / "niigata" / "complement_address_dict.yaml"
+        )
+        self._complement_dict = yaml.safe_load(
+            _complement_dict_path.read_text(encoding="utf-8")
+        )
 
     @staticmethod
     def setup():
@@ -127,8 +141,8 @@ class FwdNiigata:
                 self._commit_disaster_list_curr(webpage_text_div[1], retrieve_time)
 
             # 災害情報の解析
-            # self._logger.info("災害情報の登録完了・解析開始")
-            # self._analyze()
+            self._logger.info("災害情報の登録完了・解析開始")
+            self._analyze()
 
             # 正常終了
             self._logger.info("災害情報の解析完了")
@@ -550,7 +564,8 @@ class FwdNiigata:
                 # address1：道路名（みなとトンネル）
                 detail_data.address1 = "みなとトンネル"
                 # address2：directionマッチ部分
-                detail_data.address2 = m_addr_7.group("direction")
+                _addr2 = re.sub("行き", "方向", m_addr_7.group("direction"))
+                detail_data.address2 = _addr2
             elif m_addr_8 := re.match(
                 r"トンネル(?P<tunnel>.+)",
                 m_1st.group("address"),
@@ -585,7 +600,15 @@ class FwdNiigata:
         Returns:
             str: 補完後の住所
         """
-        # TODO implement
+        # 数字のみの場合はキロポスト表記に変換する
+        if re.match(r"\d{1,3}", target_address):
+            return f"{target_address}KP"
+
+        # 補完定義に含まれている場合は補完後文字列とする
+        if complemented := self._complement_dict.get(target_address, None):
+            return complemented
+
+        # 補完定義に含まれていない場合はそのまま返却
         return target_address
 
     def _notify(self):
