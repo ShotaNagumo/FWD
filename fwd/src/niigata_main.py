@@ -678,16 +678,10 @@ class FwdNiigata:
         datetime_format_str = r"%Y/%m/%d %H:%M"
         data = {
             "main_category": detail_data.main_category.name,
-            "sub_category": detail_data.sub_category,
             "open_dt": detail_data.open_dt.strftime(datetime_format_str),
-            "status": detail_data.status.name,
             "address1": detail_data.address1,
             "address2": detail_data.address2,
             "address3": detail_data.address3,
         }
-        if detail_data.close_dt:
-            data["close_dt"] = detail_data.close_dt.strftime(datetime_format_str)
-        else:
-            data["close_dt"] = ""
 
         return data
