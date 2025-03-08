@@ -184,10 +184,6 @@ class NiigataDisasterDetail(Base):
     """災害発生時刻
     """
 
-    close_dt = Column(DateTime, nullable=True)
-    """災害終了時刻
-    """
-
     status = Column(sqlalchemy.Enum(DisasterStatus), nullable=False)
     """災害状態
     """
