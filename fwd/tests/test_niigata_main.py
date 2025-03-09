@@ -131,10 +131,10 @@ class TestNiigataMain:
             input_file_path = (
                 TEST_RESOURCE_DIR / "niigata_webtext_2_expected_topinfo.txt"
             )
-            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+            webpage_text_notice = input_file_path.read_text(encoding="utf-8")
 
             # 案内情報を登録できること
-            instance._commit_disaster_list_notice(webpage_text_curr)
+            instance._commit_disaster_list_notice(webpage_text_notice)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
             assert results[0].notice_type == NoticeType.一般案内
@@ -145,7 +145,7 @@ class TestNiigataMain:
             assert results[0].notify_status == NotifyStatus.NOT_YET
 
             # 同一内容を登録しないこと
-            instance._commit_disaster_list_notice(webpage_text_curr)
+            instance._commit_disaster_list_notice(webpage_text_notice)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
 
@@ -182,6 +182,7 @@ class TestNiigataMain:
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
             assert results[0].retr_dt == dt
+            assert results[0].notify_status == NotifyStatus.SKIPPED
 
         finally:
             # テスト結果として保存されたデータを削除
@@ -200,6 +201,135 @@ class TestNiigataMain:
             pytest.raises(Exception),
         ):
             instance._commit_disaster_list_notice("案内情報")
+
+    def test_commit_disaster_list_chinka(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+
+            # 鎮火情報を登録できること
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 1
+            assert results[0].notice_type == NoticeType.鎮火情報
+            assert (
+                results[0].raw_text == "16時45分頃、西区〇〇付近の火災は鎮火しました。"
+            )
+            assert results[0].notify_status == NotifyStatus.NOT_YET
+
+            # 同一内容を登録しないこと
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 1
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_chinka_12時間より前のテキストは重複登録できること(
+        self, setup_logger, setup_db
+    ):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+
+            # 12時間より前のデータを登録する
+            dt = datetime.datetime.now() - datetime.timedelta(minutes=((12 * 60) + 1))
+            instance._commit_disaster_list_chinka(webpage_text_chinka, dt)
+
+            # 12時間より前のデータは重複登録できることを確認する
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 2
+            assert results[0].raw_text == results[1].raw_text
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_chinka_情報無し(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # 鎮火情報無しの場合登録されないこと（「災害は発生してません」文字列）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_4_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 0
+
+            # 鎮火情報無しの場合登録されないこと（発生情報のみ）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 0
+
+            # 鎮火情報無しの場合登録されないこと（空文字）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_6_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 0
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_chinka_dt指定(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+
+            # dtを指定して鎮火情報を登録できること
+            dt = datetime.datetime(2025, 1, 2, 12, 34)
+            instance._commit_disaster_list_chinka(webpage_text_chinka, dt)
+            results = session.query(NiigataNoticeText).all()
+            assert len(results) == 1
+            assert results[0].retr_dt == dt
+            assert results[0].notify_status == NotifyStatus.SKIPPED
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_chinka_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        # インスタンス作成
+        instance = FwdNiigata()
+
+        # テストデータ読み込み
+        input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+        webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+
+        # 例外発生すること
+        with (
+            mocker.patch("sqlalchemy.orm.Session.query", side_effect=Exception),
+            pytest.raises(Exception),
+        ):
+            instance._commit_disaster_list_chinka(webpage_text_chinka)
 
     @pytest.mark.skip
     def test_create_testfile(self, setup_logger, setup_db):
