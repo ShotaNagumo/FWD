@@ -201,6 +201,19 @@ class TestNiigataMain:
         ):
             instance._commit_disaster_list_notice("案内情報")
 
+    @pytest.mark.skip
+    def test_create_testfile(self, setup_logger, setup_db):
+        import unicodedata
+
+        instance = FwdNiigata()
+        i_path = TEST_RESOURCE_DIR / "20220117_1714.txt"
+        o_path = i_path.with_name("niigata_webtext_6_newinfo.txt")
+
+        i_data = i_path.read_text(encoding="utf-8")
+        i_data = unicodedata.normalize("NFKC", i_data)
+        _, o_data = instance._split_webtext(i_data)
+        o_path.write_text(o_data, encoding="utf-8")
+
     # def test_create_notify_text(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
 
