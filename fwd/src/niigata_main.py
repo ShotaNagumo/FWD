@@ -270,7 +270,7 @@ class FwdNiigata:
                 # 登録済みかを確認する
                 # 12時間以内の鎮火情報を対象とする（鎮火情報には日付情報が無いため、
                 # 同一住所・同一時分の鎮火情報を混同する可能性があり、これを防ぐため）
-                threshold_dt = execute_dt - datetime.timedelta(hours=12)
+                threshold_dt = retrieve_dt - datetime.timedelta(hours=12)
                 registered = bool(
                     session.query(NiigataNoticeText)
                     .filter(NiigataNoticeText.raw_text == matches.group(0))
