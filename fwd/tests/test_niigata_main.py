@@ -25,7 +25,12 @@ util_config.SETTING_DATA = setting_data
 # 自作モジュールの読み込み（設定データ更新後にインポートする）
 import util_db_manager
 import util_logger_initializer
-from niigata_datamodel import NiigataNoticeText, NoticeType, NotifyStatus
+from niigata_datamodel import (
+    NiigataNoticeText,
+    NiigataRawText,
+    NoticeType,
+    NotifyStatus,
+)
 from niigata_main import FwdNiigata
 
 TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
@@ -343,6 +348,109 @@ class TestNiigataMain:
         i_data = unicodedata.normalize("NFKC", i_data)
         _, o_data = instance._split_webtext(i_data)
         o_path.write_text(o_data, encoding="utf-8")
+
+    def test_commit_disaster_list_curr(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
+            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+
+            # 案内情報を登録できること
+            instance._commit_disaster_list_curr(webpage_text_curr)
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 2
+
+            assert (
+                results[0].raw_text
+                == "01月01日08時29分頃、西区〇〇6丁目付近で火災のため出動しています。"
+            )
+            assert results[0].notify_status == NotifyStatus.NOT_YET
+            assert results[0].detail_info is None
+
+            assert (
+                results[1].raw_text
+                == "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+            )
+            assert results[1].notify_status == NotifyStatus.NOT_YET
+            assert results[1].detail_info is None
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_curr_情報無し(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # 災害情報無しの場合登録されないこと（「災害は発生してません」文字列）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_4_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_curr(webpage_text_chinka)
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 0
+
+            # 災害情報無しの場合登録されないこと（鎮火情報のみ）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_7_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_curr(webpage_text_chinka)
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 0
+
+            # 災害情報無しの場合登録されないこと（空文字）
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_6_newinfo.txt"
+            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            instance._commit_disaster_list_curr(webpage_text_chinka)
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 0
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_curr_dt指定(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # dtを指定し災害情報を登録できること
+            dt = datetime.datetime(2025, 1, 2, 12, 34)
+            instance._commit_disaster_list_curr(
+                "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。",
+                dt,
+            )
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 1
+            assert results[0].retr_dt == dt
+            assert results[0].notify_status == NotifyStatus.SKIPPED
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.commit()
+
+    def test_commit_disaster_list_curr_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        # インスタンス作成
+        instance = FwdNiigata()
+
+        # 例外発生すること
+        with (
+            mocker.patch("sqlalchemy.orm.Session.query", side_effect=Exception),
+            pytest.raises(Exception),
+        ):
+            instance._commit_disaster_list_curr(
+                "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+            )
 
     # def test_create_notify_text(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
