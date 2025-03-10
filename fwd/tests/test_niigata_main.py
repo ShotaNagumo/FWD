@@ -26,6 +26,8 @@ util_config.SETTING_DATA = setting_data
 import util_db_manager
 import util_logger_initializer
 from niigata_datamodel import (
+    DisasterMainCategory,
+    NiigataDisasterDetail,
     NiigataNoticeText,
     NiigataRawText,
     NoticeType,
@@ -545,47 +547,32 @@ class TestNiigataMain:
     #         with pytest.raises(Exception):
     #             instance._create_notify_text(input_data)
 
-    # def test_create_data_for_create_notify_text(self, setup_logger):
-    #     instance = FwdNiigata()
+    def test_create_data_for_create_notify_text(self, setup_logger):
+        instance = FwdNiigata()
 
-    #     _open_dt = datetime.datetime.now()
-    #     _close_dt = datetime.datetime.now()
+        _open_dt = datetime.datetime.now()
 
-    #     # 入力値
-    #     input_data = niigata_datamodel.niigataDisasterDetail()
-    #     input_data.raw_text_id = 1
-    #     input_data.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     input_data.sub_category = "建物火災"
-    #     input_data.open_dt = _open_dt
-    #     input_data.status = niigata_datamodel.DisasterStatus.発生
-    #     input_data.address1 = None
-    #     input_data.address2 = "町名"
-    #     input_data.address3 = "N丁目"
-    #     input_data.close_dt = None
+        # 入力値
+        input_data = NiigataDisasterDetail()
+        input_data.raw_text_id = 1
+        input_data.main_category = DisasterMainCategory.火災
+        input_data.open_dt = _open_dt
+        input_data.address1 = "中央区"
+        input_data.address2 = "町名"
+        input_data.address3 = "N丁目"
 
-    #     # 期待値
-    #     expected_data = {
-    #         "main_category": "火災",
-    #         "sub_category": "建物火災",
-    #         "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
-    #         "status": "発生",
-    #         "address1": None,
-    #         "address2": "町名",
-    #         "address3": "N丁目",
-    #         "close_dt": "",
-    #     }
+        # 期待値
+        expected_data = {
+            "main_category": "火災",
+            "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
+            "address1": "中央区",
+            "address2": "町名",
+            "address3": "N丁目",
+        }
 
-    #     # テスト（close_dt有の場合）
-    #     output_data = instance._create_data_for_create_notify_text(input_data)
-    #     assert expected_data == output_data
-
-    #     # 入力値・期待値にclose_dtを追加
-    #     input_data.close_dt = _close_dt
-    #     expected_data["close_dt"] = _close_dt.strftime(r"%Y/%m/%d %H:%M")
-
-    #     # テスト（close_dt無の場合）
-    #     output_data = instance._create_data_for_create_notify_text(input_data)
-    #     assert expected_data == output_data
+        # テスト
+        output_data = instance._create_data_for_create_notify_text(input_data)
+        assert expected_data == output_data
 
     # def test_notify(self, mocker: MockFixture, setup_logger, setup_db):
     #     # テストデータの作成
