@@ -378,6 +378,11 @@ class TestNiigataMain:
             assert results[1].notify_status == NotifyStatus.NOT_YET
             assert results[1].detail_info is None
 
+            # 同一内容を登録しないこと
+            instance._commit_disaster_list_curr(webpage_text_curr)
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 2
+
         finally:
             # テスト結果として保存されたデータを削除
             session.query(NiigataRawText).delete()
