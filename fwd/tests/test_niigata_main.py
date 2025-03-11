@@ -762,40 +762,53 @@ class TestNiigataMain:
         detail_data = instance._analyze_text(raw_text_data)
         assert detail_data.open_dt == datetime.datetime(2024, 12, 31, 23, 59)
 
-    # def test_analyze_text_長岡市外(self, setup_logger):
-    #     # 長岡市外用テストケース（市名）
-    #     raw_text_data = niigata_datamodel.niigataRawText()
-    #     raw_text_data.id = 1
-    #     raw_text_data.raw_text = (
-    #         "12月23日 01:23 見附市 町名 に市外応援火災のため消防車が出動しました。"
-    #     )
-    #     raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
-    #     raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
+    def test_analyze_text_住所バリエーション(self, setup_logger):
+        instance = FwdNiigata()
 
-    #     # テスト実行
-    #     instance = FwdNiigata()
-    #     detail_data = instance._analyze_text(raw_text_data)
-    #     assert detail_data.address1 == "見附市"
-    #     assert detail_data.address2 == "町名"
-    #     assert detail_data.address3 is None
+        # 基本テストデータ
+        raw_text_data = NiigataRawText()
+        raw_text_data.id = 1
+        raw_text_data.retr_dt = datetime.datetime(2024, 1, 1, 1, 1)
+        raw_text_data.notify_status = NotifyStatus.NOT_YET
 
-    #     # 長岡市外用テストケース（高速）
-    #     raw_text_data = niigata_datamodel.niigataRawText()
-    #     raw_text_data.id = 1
-    #     raw_text_data.raw_text = (
-    #         "12月23日 01:23 高速 北陸道 下りに高速車両火災のため消防車が出動しました。"
-    #     )
-    #     raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
-    #     raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
+        # 市内A
+        raw_text_data.raw_text = (
+            "01月01日01時01分頃、西区寺尾東3丁目付近で救助活動のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "西区"
+        assert detail_data.address2 == "寺尾東"
+        assert detail_data.address3 == "3丁目"
 
-    #     # テスト実行
-    #     instance = FwdNiigata()
-    #     detail_data = instance._analyze_text(raw_text_data)
-    #     assert detail_data.address1 == "高速"
-    #     assert detail_data.address2 == "北陸道"
-    #     assert detail_data.address3 == "下り"
+        # 市内B
+        raw_text_data.raw_text = (
+            "01月01日01時01分頃、中央区鐘木付近で応援のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "中央区"
+        assert detail_data.address2 == "鐘木"
+        assert detail_data.address3 is None
+
+        # バイパスA
+        raw_text_data.raw_text = "01月01日01時01分頃、西BP曽和方向新通ICから曽和交差点付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "西バイパス"
+        assert detail_data.address2 == "曽和方向"
+        assert detail_data.address3 == "新通IC->曽和交差点"
+
+        # バイパスB
+        raw_text_data.raw_text = "01月01日01時01分頃、新々BP黒埼方向一日市ICから海老ヶ瀬I付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "新々バイパス"
+        assert detail_data.address2 == "黒埼方向"
+        assert detail_data.address3 == "一日市IC->海老ヶ瀬IC"
+
+        # 市内A
+        # raw_text_data.raw_text = "01月01日01時01分頃、"
+        # detail_data = instance._analyze_text(raw_text_data)
+        # assert detail_data.address1 == ""
+        # assert detail_data.address2 == ""
+        # assert detail_data.address3 == ""
 
     def test_analyze_text_災害種別バリエーション(self, setup_logger):
         instance = FwdNiigata()
@@ -846,25 +859,18 @@ class TestNiigataMain:
         detail_data = instance._analyze_text(raw_text_data)
         assert detail_data.main_category == DisasterMainCategory.その他
 
-    # def test_analyze_text_解析失敗(self, setup_logger):
-    #     # 基本テストケース
-    #     raw_text_data = niigata_datamodel.niigataRawText()
-    #     raw_text_data.id = 1
-    #     raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
-    #     raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
+    def test_analyze_text_解析失敗(self, setup_logger):
+        # 基本テストケース
+        raw_text_data = NiigataRawText()
+        raw_text_data.id = 1
+        raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 25)
+        raw_text_data.notify_status = NotifyStatus.NOT_YET
 
-    #     # 一回目の解析失敗
-    #     raw_text_data.raw_text = "※解析失敗※"
-    #     instance = FwdNiigata()
-    #     with pytest.raises(ValueError):
-    #         instance._analyze_text(raw_text_data)
-
-    #     # 二回目の解析失敗
-    #     raw_text_data.raw_text = "12月23日 01:23 長岡市 ※解析失敗※。"
-    #     instance = FwdNiigata()
-    #     with pytest.raises(ValueError):
-    #         instance._analyze_text(raw_text_data)
+        # 一回目の解析失敗
+        raw_text_data.raw_text = "※解析失敗※"
+        instance = FwdNiigata()
+        with pytest.raises(ValueError):
+            instance._analyze_text(raw_text_data)
 
     def test_analyze(self, setup_logger, setup_db):
         # テストデータを追加する
