@@ -803,7 +803,49 @@ class TestNiigataMain:
         assert detail_data.address2 == "黒埼方向"
         assert detail_data.address3 == "一日市IC->海老ヶ瀬IC"
 
-        # 市内A
+        # 北陸道A
+        raw_text_data.raw_text = "01月01日01時01分頃、北陸自動車道上り北陸道上り 巻潟東インタ付近で救助活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "北陸道"
+        assert detail_data.address2 == "上り"
+        assert detail_data.address3 == "巻潟東IC"
+
+        # 北陸道B
+        raw_text_data.raw_text = "01月01日01時01分頃、北陸自動車道下り北陸自動車道下り 448付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "北陸道"
+        assert detail_data.address2 == "下り"
+        assert detail_data.address3 == "448KP"
+
+        # 磐越道
+        raw_text_data.raw_text = "01月01日01時01分頃、磐越自動車道下り磐越道下り 新潟パーキン付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "磐越道"
+        assert detail_data.address2 == "下り"
+        assert detail_data.address3 == "新潟PA"
+
+        # 日東道A
+        raw_text_data.raw_text = "01月01日01時01分頃、日本海東北自動車道▼日本海東北自動車道下付近で火災のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "日東道"
+        assert detail_data.address2 == "下り"
+        assert detail_data.address3 is None
+
+        # 日東道B
+        raw_text_data.raw_text = "01月01日01時01分頃、日本海東北自動車道△日東道上り 新潟亀田付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "日東道"
+        assert detail_data.address2 == "上り"
+        assert detail_data.address3 == "新潟亀田IC"
+
+        # A
+        # raw_text_data.raw_text = "01月01日01時01分頃、"
+        # detail_data = instance._analyze_text(raw_text_data)
+        # assert detail_data.address1 == ""
+        # assert detail_data.address2 == ""
+        # assert detail_data.address3 == ""
+
+        # B
         # raw_text_data.raw_text = "01月01日01時01分頃、"
         # detail_data = instance._analyze_text(raw_text_data)
         # assert detail_data.address1 == ""
