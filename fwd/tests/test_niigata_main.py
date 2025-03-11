@@ -27,6 +27,7 @@ import util_db_manager
 import util_logger_initializer
 from niigata_datamodel import (
     DisasterMainCategory,
+    DisasterStatus,
     NiigataDisasterDetail,
     NiigataNoticeText,
     NiigataRawText,
@@ -343,8 +344,8 @@ class TestNiigataMain:
         import unicodedata
 
         instance = FwdNiigata()
-        i_path = TEST_RESOURCE_DIR / "20220117_1714.txt"
-        o_path = i_path.with_name("niigata_webtext_6_newinfo.txt")
+        i_path = TEST_RESOURCE_DIR / "20220101_2158.txt"
+        o_path = i_path.with_name("niigata_webtext_7_newinfo.txt")
 
         i_data = i_path.read_text(encoding="utf-8")
         i_data = unicodedata.normalize("NFKC", i_data)
@@ -986,110 +987,94 @@ class TestNiigataMain:
     #     with pytest.raises(ValueError):
     #         instance._analyze_text(raw_text_data)
 
-    # def test_analyze(self, setup_logger, setup_db):
-    #     # テストデータを追加する
-    #     raw_text_datas = []
-    #     # 1件目：発生
-    #     _raw_text_data = niigata_datamodel.niigataRawText()
-    #     _raw_text_data.id = 1
-    #     _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
-    #     _raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     _raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
-    #     _raw_text_data.raw_text = (
-    #         "12月23日 01:02 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     _raw_text_data.detail_info = None
-    #     raw_text_datas.append(_raw_text_data)
-    #     # 2件目：終了
-    #     _raw_text_data = niigata_datamodel.niigataRawText()
-    #     _raw_text_data.id = 2
-    #     _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
-    #     _raw_text_data.text_pos = niigata_datamodel.TextPosition.PAST
-    #     _raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
-    #     _raw_text_data.raw_text = (
-    #         "12月23日 01:01 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     _raw_text_data.detail_info = None
-    #     raw_text_datas.append(_raw_text_data)
-    #     # 3件目：発生（解析済み）
-    #     _raw_text_data = niigata_datamodel.niigataRawText()
-    #     _raw_text_data.id = 3
-    #     _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
-    #     _raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     _raw_text_data.notify_status = niigata_datamodel.NotifyStatus.SKIPPED
-    #     _raw_text_data.raw_text = (
-    #         "12月23日 01:00 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     _detail_data = niigata_datamodel.niigataDisasterDetail()
-    #     _detail_data.raw_text_id = 3
-    #     _detail_data.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     _detail_data.sub_category = "建物火災"
-    #     _detail_data.open_dt = datetime.datetime(2024, 12, 23, 1, 0)
-    #     _detail_data.close_dt = None
-    #     _detail_data.status = niigata_datamodel.DisasterStatus.発生
-    #     _detail_data.address1 = None
-    #     _detail_data.address2 = "町名"
-    #     _detail_data.address3 = "N丁目"
-    #     _raw_text_data.detail_info = _detail_data
-    #     raw_text_datas.append(_raw_text_data)
-    #     # DBに登録
-    #     session = util_db_manager.SESSION()
-    #     try:
-    #         session.add_all(raw_text_datas)
-    #         session.commit()
+    def test_analyze(self, setup_logger, setup_db):
+        # テストデータを追加する
+        raw_text_datas = []
+        # 1件目：発生（解析済み）
+        _raw_text_data = NiigataRawText()
+        _raw_text_data.id = 1
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 1)
+        _raw_text_data.notify_status = NotifyStatus.SKIPPED
+        _raw_text_data.raw_text = (
+            "12月23日01時01分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+        )
+        _detail_data = NiigataDisasterDetail()
+        _detail_data.raw_text_id = 1
+        _detail_data.main_category = DisasterMainCategory.火災
+        _detail_data.open_dt = datetime.datetime(2024, 12, 23, 1, 0)
+        _detail_data.status = DisasterStatus.発生
+        _detail_data.address1 = "東区"
+        _detail_data.address2 = "〇〇〇"
+        _detail_data.address3 = "2丁目"
+        _raw_text_data.detail_info = _detail_data
+        raw_text_datas.append(_raw_text_data)
 
-    #         # テスト実行
-    #         instance = FwdNiigata()
-    #         instance._analyze()
-    #         results = session.query(niigata_datamodel.niigataRawText).all()
+        # 2件目：発生
+        _raw_text_data = NiigataRawText()
+        _raw_text_data.id = 2
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 2)
+        _raw_text_data.notify_status = NotifyStatus.NOT_YET
+        _raw_text_data.raw_text = (
+            "12月23日01時02分頃、西区〇〇6丁目付近で火災のため出動しています。"
+        )
+        _raw_text_data.detail_info = None
+        raw_text_datas.append(_raw_text_data)
 
-    #         # 1件目：detail_dataが登録され、通知不要が設定されていないこと
-    #         assert results[0].detail_info is not None
-    #         assert results[0].notify_status == niigata_datamodel.NotifyStatus.NOT_YET
+        # DBに登録
+        session = util_db_manager.SESSION()
+        try:
+            session.add_all(raw_text_datas)
+            session.commit()
 
-    #         # 2件目：detail_dataが登録され、通知不要が設定されていること
-    #         assert results[1].detail_info is not None
-    #         assert results[1].notify_status == niigata_datamodel.NotifyStatus.SKIPPED
+            # テスト実行
+            instance = FwdNiigata()
+            instance._analyze()
 
-    #         # 3件目：実行前と同じ状態であること
-    #         assert results[2] == raw_text_datas[2]
+            # 実行結果取得
+            results = session.query(NiigataRawText).all()
 
-    #     finally:
-    #         # テスト用に投入したデータを削除
-    #         session.query(niigata_datamodel.niigataRawText).delete()
-    #         session.query(niigata_datamodel.niigataDisasterDetail).delete()
-    #         session.commit()
+            # 1件目：実行前と同じ状態であること
+            assert results[0] == raw_text_datas[0]
 
-    # def test_analyze_exception(self, mocker: MockFixture, setup_logger, setup_db):
-    #     # テストデータを追加する
-    #     # 1件目：発生
-    #     _raw_text_data = niigata_datamodel.niigataRawText()
-    #     _raw_text_data.id = 1
-    #     _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 4)
-    #     _raw_text_data.text_pos = niigata_datamodel.TextPosition.CURR
-    #     _raw_text_data.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
-    #     _raw_text_data.raw_text = (
-    #         "12月23日 01:02 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     _raw_text_data.detail_info = None
-    #     session = util_db_manager.SESSION()
-    #     try:
-    #         session.add(_raw_text_data)
-    #         session.commit()
+            # 2件目：detail_dataが登録されること
+            assert results[1].detail_info is not None
+            assert results[1].notify_status == NotifyStatus.NOT_YET
 
-    #         # テスト実行
-    #         instance = FwdNiigata()
-    #         with mocker.patch(
-    #             "niigata_main.FwdNiigata._analyze_text", side_effect=ValueError
-    #         ):
-    #             with pytest.raises(ValueError):
-    #                 instance._analyze()
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.commit()
 
-    #     finally:
-    #         # テスト用に投入したデータを削除
-    #         session.query(niigata_datamodel.niigataRawText).delete()
-    #         session.query(niigata_datamodel.niigataDisasterDetail).delete()
-    #         session.commit()
+    def test_analyze_exception(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータを追加する
+        # 1件目：発生
+        _raw_text_data = NiigataRawText()
+        _raw_text_data.id = 2
+        _raw_text_data.retr_dt = datetime.datetime(2024, 12, 23, 1, 2)
+        _raw_text_data.notify_status = NotifyStatus.NOT_YET
+        _raw_text_data.raw_text = (
+            "12月23日01時02分頃、西区〇〇6丁目付近で火災のため出動しています。"
+        )
+        _raw_text_data.detail_info = None
+        session = util_db_manager.SESSION()
+        try:
+            session.add(_raw_text_data)
+            session.commit()
+
+            # テスト実行
+            instance = FwdNiigata()
+            with mocker.patch(
+                "niigata_main.FwdNiigata._analyze_text", side_effect=ValueError
+            ):
+                with pytest.raises(ValueError):
+                    instance._analyze()
+
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.commit()
 
     # def test_execute(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
