@@ -838,19 +838,67 @@ class TestNiigataMain:
         assert detail_data.address2 == "上り"
         assert detail_data.address3 == "新潟亀田IC"
 
-        # A
-        # raw_text_data.raw_text = "01月01日01時01分頃、"
-        # detail_data = instance._analyze_text(raw_text_data)
-        # assert detail_data.address1 == ""
-        # assert detail_data.address2 == ""
-        # assert detail_data.address3 == ""
+        # 角田山A
+        raw_text_data.raw_text = (
+            "01月01日01時01分頃、角田山角田山付近で救助活動のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "角田山"
+        assert detail_data.address2 is None
+        assert detail_data.address3 is None
 
-        # B
-        # raw_text_data.raw_text = "01月01日01時01分頃、"
-        # detail_data = instance._analyze_text(raw_text_data)
-        # assert detail_data.address1 == ""
-        # assert detail_data.address2 == ""
-        # assert detail_data.address3 == ""
+        # 角田山B
+        raw_text_data.raw_text = "01月01日01時01分頃、角田山角田山 宮前コース 付近で救助活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "角田山"
+        assert detail_data.address2 == "宮前コース"
+        assert detail_data.address3 is None
+
+        # みなとトンネルA
+        raw_text_data.raw_text = "01月01日01時01分頃、みなとTN山の下行きみなとトンネル山の下付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "みなとトンネル"
+        assert detail_data.address2 == "山の下方向"
+        assert detail_data.address3 is None
+
+        # みなとトンネルB
+        raw_text_data.raw_text = "01月01日01時01分頃、みなとTN入船行きみなとトンネル入船行車付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "みなとトンネル"
+        assert detail_data.address2 == "入船方向"
+        assert detail_data.address3 is None
+
+        # トンネルA
+        raw_text_data.raw_text = "01月01日01時01分頃、トンネル間瀬隧道トンネル付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "間瀬隧道トンネル"
+        assert detail_data.address2 is None
+        assert detail_data.address3 is None
+
+        # トンネルB
+        raw_text_data.raw_text = "01月01日01時01分頃、トンネル小浜トンネル付近で救急活動のため出動しています。"
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "小浜トンネル"
+        assert detail_data.address2 is None
+        assert detail_data.address3 is None
+
+        # その他A
+        raw_text_data.raw_text = (
+            "01月01日01時01分頃、村上市村上市付近で火災のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "村上市"
+        assert detail_data.address2 is None
+        assert detail_data.address3 is None
+
+        # その他B
+        raw_text_data.raw_text = (
+            "01月01日01時01分頃、※その他住所※付近で火災のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "※その他住所※"
+        assert detail_data.address2 is None
+        assert detail_data.address3 is None
 
     def test_analyze_text_災害種別バリエーション(self, setup_logger):
         instance = FwdNiigata()
