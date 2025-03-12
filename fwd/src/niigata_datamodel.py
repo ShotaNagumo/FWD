@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 import sqlalchemy
 import util_db_manager
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 Base = sqlalchemy.orm.declarative_base()
@@ -156,6 +156,10 @@ class NiigataRawText(Base):
         sqlalchemy.Enum(NotifyStatus), nullable=False, default=NotifyStatus.NOT_YET
     )
     """災害情報の通知状態
+    """
+
+    is_closed = Column(Boolean, nullable=False, default=False)
+    """終了情報取得済み
     """
 
     detail_info = relationship("NiigataDisasterDetail", uselist=False)
