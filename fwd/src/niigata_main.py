@@ -360,6 +360,28 @@ class FwdNiigata:
         finally:
             session.close()
 
+    def _commit_disaster_list_close(self, webpage_text_curr: str, execute_dt=None):
+        session: Session = util_db_manager.SESSION()
+
+        # 終了情報を登録する
+        try:
+            # 終了情報が登録されていない災害情報一覧を取得する
+            target_list = session.query(NiigataRawText).filter(
+                NiigataRawText.is_closed.is_(False)
+            )
+
+            for target in target_list:
+                # raw_text が webpage_text_curr に含まれているかを確認する
+                is_closed = not bool(re.search(target.raw_text, webpage_text_curr))
+
+        except Exception:
+            # 解析に失敗した場合はロールバックする
+            self._logger.error("「終了」の災害情報登録失敗")
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def _analyze(self):
         """災害文字列の解析を実行する"""
 

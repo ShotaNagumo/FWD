@@ -460,6 +460,33 @@ class TestNiigataMain:
                 "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
             )
 
+    def test_commit_disaster_list_close(self, setup_logger, setup_db):
+        session = util_db_manager.SESSION()
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
+
+            # テストデータ登録
+            testdata_raw = NiigataRawText()
+            testdata_raw.raw_text = "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+            testdata_raw.retr_dt = datetime.datetime.now()
+            testdata_raw.notify_status = NotifyStatus.NOT_YET
+            testdata_raw.is_closed = False
+            session.add(testdata_raw)
+            session.commit()
+
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
+            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+
+            # 案内情報を登録できること
+            instance._commit_disaster_list_close(webpage_text_curr)
+
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.commit()
+
     # def test_create_notify_text(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
 
