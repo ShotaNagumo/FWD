@@ -107,7 +107,7 @@ class FwdNiigata:
             text_files = [_ for _ in text_dir_path.glob("*.txt")]
 
             # テキストファイルから災害情報を読み込み、解析処理を行う
-            self._logger.info("災害情報の登録開始")
+            self._logger.info("災害情報の登録・解析開始")
             for index, text_file in enumerate(text_files):
                 # ファイル名から実行時刻を取得する
                 filename_m = re.match(
@@ -134,18 +134,20 @@ class FwdNiigata:
                 # 案内情報をDBへ登録する
                 self._commit_disaster_list_notice(webpage_text_div[0], retrieve_time)
 
+                # 終了情報をDBへ登録する
+                self._commit_disaster_list_close(webpage_text_div[1], retrieve_time)
+
                 # 鎮火情報をDBへ登録する
                 self._commit_disaster_list_chinka(webpage_text_div[1], retrieve_time)
 
                 # 災害情報をDBへ登録する
                 self._commit_disaster_list_curr(webpage_text_div[1], retrieve_time)
 
-            # 災害情報の解析
-            self._logger.info("災害情報の登録完了・解析開始")
-            self._analyze()
+                # 災害情報の解析
+                self._analyze()
 
             # 正常終了
-            self._logger.info("災害情報の解析完了")
+            self._logger.info("災害情報の登録・解析完了")
             return True
 
         except Exception:
