@@ -361,7 +361,14 @@ class FwdNiigata:
             session.close()
 
     def _commit_disaster_list_close(self, webpage_text_curr: str, execute_dt=None):
+        """災害の終了を確認し、終了情報をDBに登録する
+
+        Args:
+            webpage_text_curr (str): 「最新出動情報」の文字列
+            execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
+        """
         session: Session = util_db_manager.SESSION()
+        retrieve_dt = datetime.datetime.now() if execute_dt is None else execute_dt
 
         # 終了情報を登録する
         try:
@@ -373,6 +380,28 @@ class FwdNiigata:
             for target in target_list:
                 # raw_text が webpage_text_curr に含まれているかを確認する
                 is_closed = not bool(re.search(target.raw_text, webpage_text_curr))
+                if is_closed:
+                    # 終了情報を登録する
+                    close_data = NiigataRawText()
+                    close_data.raw_text = target.raw_text
+                    close_data.retr_dt = retrieve_dt
+                    close_data.notify_status = NotifyStatus.SKIPPED
+                    close_data.is_closed = True
+                    close_detail_data = NiigataDisasterDetail()
+                    close_detail_data.main_category = target.detail_info.main_category
+                    close_detail_data.open_dt = target.detail_info.open_dt
+                    close_detail_data.status = DisasterStatus.終了
+                    close_detail_data.address1 = target.detail_info.address1
+                    close_detail_data.address2 = target.detail_info.address2
+                    close_detail_data.address3 = target.detail_info.address3
+                    close_data.detail_info = close_detail_data
+                    session.add(close_data)
+                    session.commit()
+
+                    # targetの終了情報を更新する
+                    target.is_closed = True
+                    session.add(target)
+                    session.commit()
 
         except Exception:
             # 解析に失敗した場合はロールバックする
