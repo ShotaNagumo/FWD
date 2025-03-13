@@ -468,10 +468,20 @@ class TestNiigataMain:
 
             # テストデータ登録
             testdata_raw = NiigataRawText()
-            testdata_raw.raw_text = "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+            testdata_raw.raw_text = (
+                "01月01日08時11分頃、中央区〇〇〇付近で救急活動のため出動しています。"
+            )
             testdata_raw.retr_dt = datetime.datetime.now()
-            testdata_raw.notify_status = NotifyStatus.NOT_YET
+            testdata_raw.notify_status = NotifyStatus.NOTIFIED
             testdata_raw.is_closed = False
+            testdata_detail = NiigataDisasterDetail()
+            testdata_detail.main_category = DisasterMainCategory.火災
+            testdata_detail.open_dt = datetime.datetime(2024, 1, 1, 8, 11)
+            testdata_detail.status = DisasterStatus.発生
+            testdata_detail.address1 = "中央区"
+            testdata_detail.address2 = "〇〇〇"
+            testdata_detail.address3 = None
+            testdata_raw.detail_info = testdata_detail
             session.add(testdata_raw)
             session.commit()
 
@@ -479,13 +489,46 @@ class TestNiigataMain:
             input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
             webpage_text_curr = input_file_path.read_text(encoding="utf-8")
 
-            # 案内情報を登録できること
+            # テスト対象関数実行
             instance._commit_disaster_list_close(webpage_text_curr)
+
+            # 実行結果取得
+            results = session.query(NiigataRawText).all()
+            assert len(results) == 2
+
+            # 元のレコードが更新されていること
+            assert results[0].is_closed is True
+
+            # 災害終了情報が、元のレコードをベースとして新規登録されていること
+            assert results[1].raw_text == testdata_raw.raw_text
+            assert results[1].notify_status == NotifyStatus.SKIPPED
+            assert results[1].is_closed is True
+            assert results[1].detail_info.main_category == testdata_detail.main_category
+            assert results[1].detail_info.open_dt == testdata_detail.open_dt
+            assert results[1].detail_info.status == DisasterStatus.終了
+            assert results[1].detail_info.address1 == testdata_detail.address1
+            assert results[1].detail_info.address2 == testdata_detail.address2
+            assert results[1].detail_info.address3 == testdata_detail.address3
 
         finally:
             # テスト結果として保存されたデータを削除
             session.query(NiigataRawText).delete()
             session.commit()
+
+    def test_commit_disaster_list_close_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        # インスタンス作成
+        instance = FwdNiigata()
+
+        # 例外発生すること
+        with (
+            mocker.patch("sqlalchemy.orm.Session.query", side_effect=Exception),
+            pytest.raises(Exception),
+        ):
+            instance._commit_disaster_list_close(
+                "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+            )
 
     # def test_create_notify_text(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
