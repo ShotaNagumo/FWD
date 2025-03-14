@@ -33,6 +33,7 @@ from niigata_datamodel import (
     NiigataRawText,
     NoticeType,
     NotifyStatus,
+    OpenCloseStatus,
 )
 from niigata_main import FwdNiigata
 
@@ -473,7 +474,7 @@ class TestNiigataMain:
             )
             testdata_raw.retr_dt = datetime.datetime.now()
             testdata_raw.notify_status = NotifyStatus.NOTIFIED
-            testdata_raw.is_closed = False
+            testdata_raw.open_close_status = OpenCloseStatus.発生中
             testdata_detail = NiigataDisasterDetail()
             testdata_detail.main_category = DisasterMainCategory.火災
             testdata_detail.open_dt = datetime.datetime(2024, 1, 1, 8, 11)
@@ -497,12 +498,12 @@ class TestNiigataMain:
             assert len(results) == 2
 
             # 元のレコードが更新されていること
-            assert results[0].is_closed is True
+            assert results[0].open_close_status == OpenCloseStatus.発生
 
             # 災害終了情報が、元のレコードをベースとして新規登録されていること
             assert results[1].raw_text == testdata_raw.raw_text
             assert results[1].notify_status == NotifyStatus.SKIPPED
-            assert results[1].is_closed is True
+            assert results[1].open_close_status == OpenCloseStatus.終了
             assert results[1].detail_info.main_category == testdata_detail.main_category
             assert results[1].detail_info.open_dt == testdata_detail.open_dt
             assert results[1].detail_info.status == DisasterStatus.終了

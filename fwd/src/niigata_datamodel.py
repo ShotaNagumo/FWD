@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 import sqlalchemy
 import util_db_manager
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 Base = sqlalchemy.orm.declarative_base()
@@ -11,6 +11,26 @@ Base = sqlalchemy.orm.declarative_base()
 
 def create_table_all():
     Base.metadata.create_all(bind=util_db_manager.ENGINE)
+
+
+class OpenCloseStatus(Enum):
+    """災害情報の状態
+
+    Args:
+        Enum (_type_): Enum基底クラス
+    """
+
+    発生中 = auto()
+    """発生情報のうち、終了情報が記録されていない状態
+    """
+
+    発生 = auto()
+    """発生情報
+    """
+
+    終了 = auto()
+    """終了情報
+    """
 
 
 class NotifyStatus(Enum):
@@ -147,6 +167,12 @@ class NiigataRawText(Base):
     """災害情報文字列
     """
 
+    open_close_status = Column(
+        sqlalchemy.Enum(OpenCloseStatus), nullable=False, default=OpenCloseStatus.発生
+    )
+    """災害情報の状態
+    """
+
     retr_dt = Column(DateTime, nullable=False, default=datetime.datetime.now())
     """取得時刻
     （過去データから取得した場合は、過去データが記録されているファイル名から取得した日付）
@@ -156,10 +182,6 @@ class NiigataRawText(Base):
         sqlalchemy.Enum(NotifyStatus), nullable=False, default=NotifyStatus.NOT_YET
     )
     """災害情報の通知状態
-    """
-
-    is_closed = Column(Boolean, nullable=False, default=False)
-    """終了情報取得済み
     """
 
     detail_info = relationship("NiigataDisasterDetail", uselist=False)
