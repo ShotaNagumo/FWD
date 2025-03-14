@@ -168,7 +168,7 @@ class NiigataRawText(Base):
     """
 
     open_close_status = Column(
-        sqlalchemy.Enum(OpenCloseStatus), nullable=False, default=OpenCloseStatus.発生
+        sqlalchemy.Enum(OpenCloseStatus), nullable=False, default=OpenCloseStatus.発生中
     )
     """災害情報の状態
     """
