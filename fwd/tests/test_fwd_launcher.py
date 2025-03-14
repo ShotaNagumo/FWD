@@ -51,6 +51,9 @@ class TestFwdLauncher:
             "nagaoka": {
                 "webhook_url": "https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz"
             },
+            "niigata": {
+                "webhook_url": "https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz"
+            },
         }
         util_config.SETTING_DATA = setting_data
 
