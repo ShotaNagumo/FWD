@@ -736,3 +736,24 @@ class FwdNiigata:
         }
 
         return data
+
+    def _create_notify_data_by_notice(
+        self, notice_data: NiigataNoticeText
+    ) -> dict[str, str]:
+        """通知文を作成するために使用するデータへの変換を行う（案内情報）
+
+        Args:
+            notice_data (NiigataNoticeText): 案内情報データ
+
+        Returns:
+            dict[str, str]: 通知文を作成するために使用するデータ
+        """
+        data = {
+            "notice_text": notice_data.raw_text,
+        }
+        if notice_data.notice_type == NoticeType.一般案内:
+            data["notice_title"] = "情報"
+        elif notice_data.notice_type == NoticeType.鎮火情報:
+            data["notice_title"] = "鎮火情報"
+
+        return data
