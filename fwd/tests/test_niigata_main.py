@@ -1122,6 +1122,33 @@ class TestNiigataMain:
             session.query(NiigataDisasterDetail).delete()
             session.commit()
 
+    def test_create_notify_data_by_notice_一般案内(self, setup_logger):
+        input_data = NiigataNoticeText()
+        input_data.notice_type = NoticeType.一般案内
+        input_data.raw_text = "一般案内テキスト"
+        input_data.retr_dt = datetime.datetime.now()
+        input_data.notify_status = NotifyStatus.NOT_YET
+
+        instance = FwdNiigata()
+        output_data = instance._create_notify_data_by_notice(input_data)
+        assert "一般案内テキスト" == output_data.get("notice_text")
+        assert "情報" == output_data.get("notice_title")
+
+    def test_create_notify_data_by_notice_鎮火情報(self, setup_logger):
+        input_data = NiigataNoticeText()
+        input_data.notice_type = NoticeType.鎮火情報
+        input_data.raw_text = "11時33分頃、中央区〇〇1丁目付近の火災は鎮火しました。"
+        input_data.retr_dt = datetime.datetime.now()
+        input_data.notify_status = NotifyStatus.NOT_YET
+
+        instance = FwdNiigata()
+        output_data = instance._create_notify_data_by_notice(input_data)
+        assert (
+            "11時33分頃、中央区〇〇1丁目付近の火災は鎮火しました。"
+            == output_data.get("notice_text")
+        )
+        assert "鎮火情報" == output_data.get("notice_title")
+
     # def test_execute(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
     #     # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
