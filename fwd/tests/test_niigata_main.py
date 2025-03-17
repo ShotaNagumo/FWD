@@ -619,33 +619,6 @@ class TestNiigataMain:
     #         with pytest.raises(Exception):
     #             instance._create_notify_text(input_data)
 
-    def test_create_data_for_create_notify_text(self, setup_logger):
-        instance = FwdNiigata()
-
-        _open_dt = datetime.datetime.now()
-
-        # 入力値
-        input_data = NiigataDisasterDetail()
-        input_data.raw_text_id = 1
-        input_data.main_category = DisasterMainCategory.火災
-        input_data.open_dt = _open_dt
-        input_data.address1 = "中央区"
-        input_data.address2 = "町名"
-        input_data.address3 = "N丁目"
-
-        # 期待値
-        expected_data = {
-            "main_category": "火災",
-            "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
-            "address1": "中央区",
-            "address2": "町名",
-            "address3": "N丁目",
-        }
-
-        # テスト
-        output_data = instance._create_data_for_create_notify_text(input_data)
-        assert expected_data == output_data
-
     # def test_notify(self, mocker: MockFixture, setup_logger, setup_db):
     #     # テストデータの作成
     #     # 発生系
@@ -1149,6 +1122,44 @@ class TestNiigataMain:
         )
         assert "鎮火情報" == output_data.get("notice_title")
 
+    def test_create_notify_deta_by_disaster(self, setup_logger):
+        instance = FwdNiigata()
+
+        _open_dt = datetime.datetime.now()
+
+        # 基本テストデータ
+        input_data = NiigataDisasterDetail()
+        input_data.main_category = DisasterMainCategory.火災
+        input_data.open_dt = _open_dt
+        input_data.address1 = None
+        input_data.address2 = None
+        input_data.address3 = None
+
+        # 基本期待値
+        expected_data = {
+            "main_category": "火災",
+            "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
+        }
+
+        # テスト(address1のみ)
+        input_data.address1 = "中央区"
+        expected_data["address"] = "中央区"
+        output_data = instance._create_notify_data_by_disaster(input_data)
+        assert expected_data == output_data
+
+        # テスト(address1+address2)
+        input_data.address2 = "〇〇"
+        expected_data["address"] = "中央区 〇〇"
+        output_data = instance._create_notify_data_by_disaster(input_data)
+        assert expected_data == output_data
+
+        # テスト(address1+address2+address3)
+        input_data.address3 = "N丁目"
+        expected_data["address"] = "中央区 〇〇 N丁目"
+        output_data = instance._create_notify_data_by_disaster(input_data)
+        assert expected_data == output_data
+
+    def test_create_notify_text_notice(self, setup_logger):
     # def test_execute(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
     #     # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
