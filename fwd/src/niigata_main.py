@@ -682,7 +682,9 @@ class FwdNiigata:
             # 通知を実行する
             for raw_text_data in not_notified_list:
                 # 通知文の作成
-                notify_text = self._create_notify_text(raw_text_data.detail_info)
+                notify_text = self._create_notify_text_disaster(
+                    raw_text_data.detail_info
+                )
                 # 通知の実行
                 util_request_wrapper.post_to_discord(self._webhook_url, notify_text)
                 # 状態を通知済みに更新
@@ -697,8 +699,26 @@ class FwdNiigata:
         finally:
             session.close()
 
-    def _create_notify_text(self, detail_data: NiigataDisasterDetail) -> str:
-        """通知文を作成する
+    def _create_notify_text_notice(self, notice_data: NiigataNoticeText) -> str:
+        """通知文を作成する（案内情報）
+
+        Args:
+            notice_data (NiigataNoticeText): 案内情報データ
+
+        Returns:
+            str: 作成した通知文
+        """
+        try:
+            template = self._j2_env.get_template("notify_notice.j2")
+            data = self._create_notify_data_by_notice(notice_data)
+            notify_text = template.render(data)
+            return notify_text
+        except Exception:
+            self._logger.error("通知文の作成に失敗")
+            raise
+
+    def _create_notify_text_disaster(self, detail_data: NiigataDisasterDetail) -> str:
+        """通知文を作成する（災害情報）
 
         Args:
             detail_data (NiigataDisasterDetail): 解析結果データ
@@ -707,8 +727,8 @@ class FwdNiigata:
             str: 作成した通知文
         """
         try:
-            template = self._j2_env.get_template("notify.j2")
-            data = self._create_data_for_create_notify_text(detail_data)
+            template = self._j2_env.get_template("notify_disaster.j2")
+            data = self._create_notify_data_by_disaster(detail_data)
             notify_text = template.render(data)
             return notify_text
         except Exception:
