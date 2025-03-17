@@ -715,10 +715,10 @@ class FwdNiigata:
             self._logger.error("通知文の作成に失敗")
             raise
 
-    def _create_data_for_create_notify_text(
+    def _create_notify_data_by_disaster(
         self, detail_data: NiigataDisasterDetail
     ) -> dict[str, str]:
-        """通知文を作成するために使用するデータへの変換を行う
+        """通知文を作成するために使用するデータへの変換を行う（災害情報）
 
         Args:
             detail_data (NiigataDisasterDetail): 解析結果データ
@@ -730,10 +730,12 @@ class FwdNiigata:
         data = {
             "main_category": detail_data.main_category.name,
             "open_dt": detail_data.open_dt.strftime(datetime_format_str),
-            "address1": detail_data.address1,
-            "address2": detail_data.address2,
-            "address3": detail_data.address3,
         }
+        addr_list = []
+        for addr in (detail_data.address1, detail_data.address2, detail_data.address3):
+            if addr:
+                addr_list.append(addr)
+        data["address"] = " ".join(addr_list)
 
         return data
 
@@ -748,8 +750,10 @@ class FwdNiigata:
         Returns:
             dict[str, str]: 通知文を作成するために使用するデータ
         """
+        datetime_format_str = r"%Y/%m/%d %H:%M"
         data = {
             "notice_text": notice_data.raw_text,
+            "retr_dt": notice_data.retr_dt.strftime(datetime_format_str),
         }
         if notice_data.notice_type == NoticeType.一般案内:
             data["notice_title"] = "情報"
