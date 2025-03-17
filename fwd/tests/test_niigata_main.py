@@ -1160,6 +1160,45 @@ class TestNiigataMain:
         assert expected_data == output_data
 
     def test_create_notify_text_notice(self, setup_logger):
+        instance = FwdNiigata()
+
+        # 入力データ
+        input_data = NiigataNoticeText()
+        input_data.notice_type = NoticeType.一般案内
+        input_data.raw_text = "一般案内テキスト"
+        input_data.retr_dt = datetime.datetime(2025, 1, 23, 12, 34)
+        input_data.notify_status = NotifyStatus.NOT_YET
+
+        # 期待値
+        expected_data = (
+            "[新潟消防] 【情報】 一般案内テキスト\n掲載日時：2025/01/23 12:34"
+        )
+
+        # テスト実行
+        output_data = instance._create_notify_text_notice(input_data)
+        assert expected_data == output_data
+
+    def test_create_notify_text_disaster(self, setup_logger):
+        instance = FwdNiigata()
+
+        # 入力データ
+        input_data = NiigataDisasterDetail()
+        input_data.main_category = DisasterMainCategory.火災
+        input_data.open_dt = datetime.datetime(2025, 1, 23, 12, 34)
+        input_data.status = DisasterStatus.発生
+        input_data.address1 = "中央区"
+        input_data.address2 = "〇〇"
+        input_data.address3 = "N丁目"
+
+        # 期待値
+        expected_data = (
+            "[新潟消防] 【火災】 中央区 〇〇 N丁目\n発生日時：2025/01/23 12:34"
+        )
+
+        # テスト実行
+        output_data = instance._create_notify_text_disaster(input_data)
+        assert expected_data == output_data
+
     # def test_execute(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
     #     # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
