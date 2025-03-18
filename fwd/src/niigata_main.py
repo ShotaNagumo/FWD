@@ -672,25 +672,41 @@ class FwdNiigata:
         session: Session = util_db_manager.SESSION()
 
         try:
+            # 通知が必要な案内情報を検索する
+            not_notified_notice_list = (
+                session.query(NiigataNoticeText)
+                .filter(NiigataNoticeText.notify_status.is_(NotifyStatus.NOT_YET))
+                .all()
+            )
+
+            # 通知を実行する（案内情報）
+            for notice_data in not_notified_notice_list:
+                # 通知文の作成
+                notify_text = self._create_notify_text_notice(notice_data)
+                # 通知の実行
+                util_request_wrapper.post_to_discord(self._webhook_url, notify_text)
+                # 状態を通知済みに更新
+                notice_data.notify_status = NotifyStatus.NOTIFIED
+                session.commit()
+
             # 通知が必要な災害情報を検索する
-            not_notified_list = (
+            not_notified_disaster_list = (
                 session.query(NiigataRawText)
                 .filter(NiigataRawText.notify_status.is_(NotifyStatus.NOT_YET))
                 .all()
             )
 
-            # 通知を実行する
-            for raw_text_data in not_notified_list:
+            # 通知を実行する（災害情報）
+            for disaster_data in not_notified_disaster_list:
                 # 通知文の作成
                 notify_text = self._create_notify_text_disaster(
-                    raw_text_data.detail_info
+                    disaster_data.detail_info
                 )
                 # 通知の実行
                 util_request_wrapper.post_to_discord(self._webhook_url, notify_text)
                 # 状態を通知済みに更新
-                raw_text_data.notify_status = NotifyStatus.NOTIFIED
+                notice_data.notify_status = NotifyStatus.NOTIFIED
                 session.commit()
-
         except Exception:
             # 通知に失敗した場合は処理をロールバックする
             self._logger.error("通知処理失敗")
