@@ -112,11 +112,9 @@ class FwdNiigata:
         try:
             # 指定されたディレクトリ内の対象ファイル一覧を検索する
             text_dir_path = Path(text_dir)
-            # text_files = [_ for _ in text_dir_path.glob("*.txt")]
-            text_files = [_ for _ in text_dir_path.glob("202401*.txt")]
+            text_files = [_ for _ in text_dir_path.glob("*.txt")]
 
             # テキストファイルから災害情報を読み込み、解析処理を行う
-            self._logger.info("災害情報の登録・解析開始")
             for index, text_file in enumerate(text_files):
                 # ファイル名から実行時刻を取得する
                 filename_m = re.match(
@@ -127,7 +125,7 @@ class FwdNiigata:
                     continue
                 else:
                     self._logger.info(
-                        f"災害情報の登録[{index + 1}/{len(text_files)}]：{text_file.name}"
+                        f"災害情報の登録・解析[{index + 1}/{len(text_files)}]：{text_file.name}"
                     )
                 retrieve_time = datetime.datetime.strptime(
                     filename_m.group("date_time_str"), "%Y%m%d_%H%M"
@@ -156,7 +154,7 @@ class FwdNiigata:
                 self._analyze()
 
             # 正常終了
-            self._logger.info("災害情報の登録・解析完了")
+            self._logger.info("store_old_data() 実行完了")
             return True
 
         except Exception:
