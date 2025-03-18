@@ -1178,6 +1178,24 @@ class TestNiigataMain:
         output_data = instance._create_notify_text_notice(input_data)
         assert expected_data == output_data
 
+    def test_create_notify_text_notice_exception(
+        self, mocker: MockFixture, setup_logger
+    ):
+        instance = FwdNiigata()
+        with mocker.patch("jinja2.environment.Template.render", side_effect=Exception):
+            input_data = NiigataNoticeText()
+            with pytest.raises(Exception):
+                instance._create_notify_text_notice(input_data)
+
+    def test_create_notify_text_disaster_exception(
+        self, mocker: MockFixture, setup_logger
+    ):
+        instance = FwdNiigata()
+        with mocker.patch("jinja2.environment.Template.render", side_effect=Exception):
+            input_data = NiigataDisasterDetail()
+            with pytest.raises(Exception):
+                instance._create_notify_text_disaster(input_data)
+
     def test_create_notify_text_disaster(self, setup_logger):
         instance = FwdNiigata()
 
