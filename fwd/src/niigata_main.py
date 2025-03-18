@@ -64,6 +64,7 @@ class FwdNiigata:
         """
         try:
             self._logger.info("execute() 実行開始")
+
             # Webから災害情報テキストを取得
             webpage_text = util_request_wrapper.download_webpage(
                 FwdNiigata.WEBPAGE_URL, FwdNiigata.WEBPAGE_ENC
@@ -72,17 +73,23 @@ class FwdNiigata:
             # 災害情報テキストを分割
             webpage_text_div = self._split_webtext(webpage_text)
 
-            # 災害情報（現在発生している災害）をDBへ登録
-            self._commit_disaster_list_curr(webpage_text_div[0])
+            # 案内情報をDBへ登録する
+            self._commit_disaster_list_notice(webpage_text_div[0])
 
-            # 災害情報（過去の災害情報）をDBへ登録
-            # self._commit_disaster_list_past(webpage_text_dev[1])
+            # 終了情報をDBへ登録する
+            self._commit_disaster_list_close(webpage_text_div[1])
+
+            # 鎮火情報をDBへ登録する
+            self._commit_disaster_list_chinka(webpage_text_div[1])
+
+            # 災害情報をDBへ登録する
+            self._commit_disaster_list_curr(webpage_text_div[1])
 
             # 災害情報の解析
-            # self._analyze()
+            self._analyze()
 
-            # 災害情報の通知
-            # self._notify()
+            # 案内情報・災害情報の通知
+            self._notify()
 
             # 正常終了
             self._logger.info("execute() 実行完了")
