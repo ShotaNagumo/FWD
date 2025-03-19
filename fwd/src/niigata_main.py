@@ -710,7 +710,7 @@ class FwdNiigata:
                 # 通知の実行
                 util_request_wrapper.post_to_discord(self._webhook_url, notify_text)
                 # 状態を通知済みに更新
-                notice_data.notify_status = NotifyStatus.NOTIFIED
+                disaster_data.notify_status = NotifyStatus.NOTIFIED
                 session.commit()
         except Exception:
             # 通知に失敗した場合は処理をロールバックする
