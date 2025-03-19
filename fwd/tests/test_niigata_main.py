@@ -833,6 +833,15 @@ class TestNiigataMain:
         assert detail_data.address2 == "鐘木"
         assert detail_data.address3 is None
 
+        # 市内C（住所部分に空白文字が含まれている）
+        raw_text_data.raw_text = (
+            "03月19日22時18分頃、西蒲区巻 甲付近で救急活動のため出動しています。"
+        )
+        detail_data = instance._analyze_text(raw_text_data)
+        assert detail_data.address1 == "西蒲区"
+        assert detail_data.address2 == "巻 甲"
+        assert detail_data.address3 is None
+
         # バイパスA
         raw_text_data.raw_text = "01月01日01時01分頃、西BP曽和方向新通ICから曽和交差点付近で救急活動のため出動しています。"
         detail_data = instance._analyze_text(raw_text_data)

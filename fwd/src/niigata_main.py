@@ -516,13 +516,13 @@ class FwdNiigata:
 
             # 二回目の解析（住所詳細）
             if m_addr_1 := re.search(
-                r"(?P<district>\S+区)(?P<town>\S+)", m_1st.group("address")
+                r"(?P<district>\S+区)(?P<town>.+)", m_1st.group("address")
             ):
                 # パターン1：〇区〇町（N丁目）の場合
                 # address1：区名
                 detail_data.address1 = m_addr_1.group("district")
                 if m_2nd_1_town := re.match(
-                    r"(?P<town>\S+?)(?P<chome>\d+丁目)", m_addr_1.group("town")
+                    r"(?P<town>\D+?)(?P<chome>\d+丁目)", m_addr_1.group("town")
                 ):
                     # 〇町N丁目の場合
                     # address2: 町名
