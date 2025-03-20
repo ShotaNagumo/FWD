@@ -531,244 +531,181 @@ class TestNiigataMain:
                 "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
             )
 
-    # def test_create_notify_text(self, mocker: MockFixture, setup_logger):
-    #     instance = FwdNiigata()
+    def test_notify(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータの作成
+        # 災害（発生中）
+        raw_text_data_1 = NiigataRawText()
+        raw_text_data_1.id = 1
+        raw_text_data_1.raw_text = (
+            "01月01日01時01分頃、西区寺尾東3丁目付近で救助活動のため出動しています。"
+        )
+        raw_text_data_1.open_close_status = OpenCloseStatus.発生中
+        raw_text_data_1.retr_dt = datetime.datetime.now()
+        raw_text_data_1.notify_status = NotifyStatus.NOT_YET
+        _detail_info_1 = NiigataDisasterDetail()
+        _detail_info_1.raw_text_id = 1
+        _detail_info_1.main_category = DisasterMainCategory.救助
+        _detail_info_1.open_dt = datetime.datetime(2025, 1, 1, 1, 1)
+        _detail_info_1.status = DisasterStatus.発生
+        _detail_info_1.address1 = "西区"
+        _detail_info_1.address2 = "寺尾東"
+        _detail_info_1.address3 = "3丁目"
+        raw_text_data_1.detail_info = _detail_info_1
 
-    #     # 入力値（発生系）
-    #     input_data = niigata_datamodel.niigataDisasterDetail()
-    #     input_data.raw_text_id = 1
-    #     input_data.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     input_data.sub_category = "建物火災"
-    #     input_data.open_dt = datetime.datetime(2025, 1, 23, 1, 59)
-    #     input_data.status = niigata_datamodel.DisasterStatus.発生
-    #     input_data.address1 = ""
-    #     input_data.address2 = "町名"
-    #     input_data.address3 = "N丁目"
-    #     input_data.close_dt = None
+        # 災害（終了）
+        raw_text_data_2 = NiigataRawText()
+        raw_text_data_2.id = 2
+        raw_text_data_2.raw_text = (
+            "01月01日01時01分頃、西区寺尾東3丁目付近で救助活動のため出動しています。"
+        )
+        raw_text_data_2.open_close_status = OpenCloseStatus.終了
+        raw_text_data_2.retr_dt = datetime.datetime.now()
+        raw_text_data_2.notify_status = NotifyStatus.SKIPPED
+        _detail_info_2 = NiigataDisasterDetail()
+        _detail_info_2.raw_text_id = 2
+        _detail_info_2.main_category = DisasterMainCategory.救助
+        _detail_info_2.open_dt = datetime.datetime(2025, 1, 1, 1, 1)
+        _detail_info_2.status = DisasterStatus.終了
+        _detail_info_2.address1 = "西区"
+        _detail_info_2.address2 = "寺尾東"
+        _detail_info_2.address3 = "3丁目"
+        raw_text_data_2.detail_info = _detail_info_2
 
-    #     # 期待値（発生系）
-    #     expected_data = (
-    #         "[長岡消防] 【火災】 町名 N丁目\n"
-    #         "災害詳細：建物火災\n"
-    #         "発生日時：2025/01/23 01:59"
-    #     )
+        # 災害（発生中・通知済み）
+        raw_text_data_3 = NiigataRawText()
+        raw_text_data_3.id = 3
+        raw_text_data_3.raw_text = (
+            "01月01日01時01分頃、西区寺尾東3丁目付近で救助活動のため出動しています。"
+        )
+        raw_text_data_3.open_close_status = OpenCloseStatus.発生中
+        raw_text_data_3.retr_dt = datetime.datetime.now()
+        raw_text_data_3.notify_status = NotifyStatus.NOTIFIED
+        _detail_info_3 = NiigataDisasterDetail()
+        _detail_info_3.raw_text_id = 3
+        _detail_info_3.main_category = DisasterMainCategory.救助
+        _detail_info_3.open_dt = datetime.datetime(2025, 1, 1, 1, 1)
+        _detail_info_3.status = DisasterStatus.発生
+        _detail_info_3.address1 = "西区"
+        _detail_info_3.address2 = "寺尾東"
+        _detail_info_3.address3 = "3丁目"
+        raw_text_data_3.detail_info = _detail_info_3
 
-    #     # テスト（発生系）
-    #     rendered_text = instance._create_notify_text(input_data)
-    #     assert expected_data == rendered_text
+        # 案内情報（未通知）
+        notice_data_1 = NiigataNoticeText()
+        notice_data_1.id = 1
+        notice_data_1.notice_type = NoticeType.一般案内
+        notice_data_1.raw_text = "一般案内1"
+        notice_data_1.retr_dt = datetime.datetime.now()
+        notice_data_1.notify_status = NotifyStatus.NOT_YET
 
-    #     # 入力値（終了系）
-    #     input_data.status = niigata_datamodel.DisasterStatus.鎮火
-    #     input_data.close_dt = datetime.datetime(2025, 1, 23, 2, 59)
+        # 案内情報（通知済）
+        notice_data_2 = NiigataNoticeText()
+        notice_data_2.id = 2
+        notice_data_2.notice_type = NoticeType.一般案内
+        notice_data_2.raw_text = "一般案内2"
+        notice_data_2.retr_dt = datetime.datetime.now()
+        notice_data_2.notify_status = NotifyStatus.NOTIFIED
 
-    #     # 期待値（終了系）
-    #     expected_data = (
-    #         "[長岡消防] 【鎮火】 町名 N丁目\n"
-    #         "災害詳細：建物火災\n"
-    #         "終了日時：2025/01/23 02:59 （発生日時：2025/01/23 01:59）"
-    #     )
+        # テストデータ登録
+        session = util_db_manager.SESSION()
+        try:
+            session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
+            session.add_all([notice_data_1, notice_data_2])
+            session.commit()
 
-    #     # テスト（終了系）
-    #     rendered_text = instance._create_notify_text(input_data)
-    #     assert expected_data == rendered_text
+            # mocker登録（リクエスト処理用）
+            mocker.patch("util_request_wrapper.post_to_discord", return_value=True)
 
-    #     # 入力値（住所1, 2, 3）
-    #     input_data.address1 = "市町村名"
-    #     input_data.status = niigata_datamodel.DisasterStatus.発生
-    #     input_data.close_dt = None
+            # テスト実行
+            instance = FwdNiigata()
+            instance._notify()
 
-    #     # 期待値（住所1, 2, 3）
-    #     expected_data = (
-    #         "[長岡消防] 【火災】 市町村名 町名 N丁目\n"
-    #         "災害詳細：建物火災\n"
-    #         "発生日時：2025/01/23 01:59"
-    #     )
+            # テスト結果確認（災害情報）
+            assert (
+                session.query(NiigataRawText)
+                .filter(NiigataRawText.id == 1)
+                .first()
+                .notify_status
+                == NotifyStatus.NOTIFIED
+            )
+            assert (
+                session.query(NiigataRawText)
+                .filter(NiigataRawText.id == 2)
+                .first()
+                .notify_status
+                == NotifyStatus.SKIPPED
+            )
+            assert (
+                session.query(NiigataRawText)
+                .filter(NiigataRawText.id == 3)
+                .first()
+                .notify_status
+                == NotifyStatus.NOTIFIED
+            )
 
-    #     # テスト（住所1, 2, 3）
-    #     rendered_text = instance._create_notify_text(input_data)
-    #     assert expected_data == rendered_text
+            # テスト結果確認（案内情報）
+            assert (
+                session.query(NiigataNoticeText)
+                .filter(NiigataNoticeText.id == 1)
+                .first()
+                .notify_status
+                == NotifyStatus.NOTIFIED
+            )
+            assert (
+                session.query(NiigataNoticeText)
+                .filter(NiigataNoticeText.id == 2)
+                .first()
+                .notify_status
+                == NotifyStatus.NOTIFIED
+            )
 
-    #     # 入力値（住所1, 2）
-    #     input_data.address3 = None
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(NiigataNoticeText).delete()
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.commit()
 
-    #     # 期待値（住所1, 2）
-    #     expected_data = (
-    #         "[長岡消防] 【火災】 市町村名 町名\n"
-    #         "災害詳細：建物火災\n"
-    #         "発生日時：2025/01/23 01:59"
-    #     )
+    def test_notify_exception(self, mocker: MockFixture, setup_logger, setup_db):
+        # テストデータの作成
+        raw_text_data_1 = NiigataRawText()
+        raw_text_data_1.id = 1
+        raw_text_data_1.raw_text = (
+            "01月01日01時01分頃、西区寺尾東3丁目付近で救助活動のため出動しています。"
+        )
+        raw_text_data_1.open_close_status = OpenCloseStatus.発生中
+        raw_text_data_1.retr_dt = datetime.datetime.now()
+        raw_text_data_1.notify_status = NotifyStatus.NOT_YET
+        _detail_info_1 = NiigataDisasterDetail()
+        _detail_info_1.raw_text_id = 1
+        _detail_info_1.main_category = DisasterMainCategory.救助
+        _detail_info_1.open_dt = datetime.datetime(2025, 1, 1, 1, 1)
+        _detail_info_1.status = DisasterStatus.発生
+        _detail_info_1.address1 = "西区"
+        _detail_info_1.address2 = "寺尾東"
+        _detail_info_1.address3 = "3丁目"
+        raw_text_data_1.detail_info = _detail_info_1
 
-    #     # テスト（住所1, 2）
-    #     rendered_text = instance._create_notify_text(input_data)
+        # テストデータ登録
+        session = util_db_manager.SESSION()
+        try:
+            session.add(raw_text_data_1)
+            session.commit()
 
-    #     # 入力値（住所2）
-    #     input_data.address1 = None
+            # mocker登録（リクエスト処理用）
+            with mocker.patch(
+                "util_request_wrapper.post_to_discord", side_effect=Exception
+            ):
+                with pytest.raises(Exception):
+                    # テスト実行
+                    instance = FwdNiigata()
+                    instance._notify()
 
-    #     # 期待値（住所2）
-    #     expected_data = (
-    #         "[長岡消防] 【火災】 町名\n災害詳細：建物火災\n発生日時：2025/01/23 01:59"
-    #     )
-
-    #     # テスト（住所2）
-    #     rendered_text = instance._create_notify_text(input_data)
-
-    # def test_create_notify_text_exception(self, mocker: MockFixture, setup_logger):
-    #     instance = FwdNiigata()
-    #     with mocker.patch("jinja2.environment.Template.render", side_effect=Exception):
-    #         input_data = niigata_datamodel.niigataDisasterDetail()
-    #         with pytest.raises(Exception):
-    #             instance._create_notify_text(input_data)
-
-    # def test_notify(self, mocker: MockFixture, setup_logger, setup_db):
-    #     # テストデータの作成
-    #     # 発生系
-    #     raw_text_data_1 = niigata_datamodel.niigataRawText()
-    #     raw_text_data_1.id = 1
-    #     raw_text_data_1.raw_text = (
-    #         "12月23日 01:23 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     raw_text_data_1.retr_dt = datetime.datetime.now()
-    #     raw_text_data_1.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data_1.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
-    #     _detail_info_1 = niigata_datamodel.niigataDisasterDetail()
-    #     _detail_info_1.raw_text_id = 1
-    #     _detail_info_1.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     _detail_info_1.sub_category = "建物火災"
-    #     _detail_info_1.open_dt = datetime.datetime(2024, 12, 23, 1, 23)
-    #     _detail_info_1.close_dt = None
-    #     _detail_info_1.status = niigata_datamodel.DisasterStatus.発生
-    #     _detail_info_1.address1 = None
-    #     _detail_info_1.address2 = "町名"
-    #     _detail_info_1.address3 = "N丁目"
-    #     raw_text_data_1.detail_info = _detail_info_1
-
-    #     # 終了
-    #     raw_text_data_2 = niigata_datamodel.niigataRawText()
-    #     raw_text_data_2.id = 2
-    #     raw_text_data_2.raw_text = (
-    #         "12月23日 02:34 長岡市 町名 N丁目に救急活動のため消防車が出動しました。"
-    #     )
-    #     raw_text_data_2.retr_dt = datetime.datetime.now()
-    #     raw_text_data_2.text_pos = niigata_datamodel.TextPosition.PAST
-    #     raw_text_data_2.notify_status = niigata_datamodel.NotifyStatus.SKIPPED
-    #     _detail_info_2 = niigata_datamodel.niigataDisasterDetail()
-    #     _detail_info_2.raw_text_id = 2
-    #     _detail_info_2.main_category = niigata_datamodel.DisasterMainCategory.救急支援
-    #     _detail_info_2.sub_category = "救急活動"
-    #     _detail_info_2.open_dt = datetime.datetime(2024, 12, 23, 2, 34)
-    #     _detail_info_2.close_dt = None
-    #     _detail_info_2.status = niigata_datamodel.DisasterStatus.終了
-    #     _detail_info_2.address1 = None
-    #     _detail_info_2.address2 = "町名"
-    #     _detail_info_2.address3 = "N丁目"
-    #     raw_text_data_2.detail_info = _detail_info_2
-
-    #     # 通知済み
-    #     raw_text_data_3 = niigata_datamodel.niigataRawText()
-    #     raw_text_data_3.id = 3
-    #     raw_text_data_3.raw_text = (
-    #         "12月23日 00:12 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     raw_text_data_3.retr_dt = datetime.datetime.now()
-    #     raw_text_data_3.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data_3.notify_status = niigata_datamodel.NotifyStatus.NOTIFIED
-    #     _detail_info_3 = niigata_datamodel.niigataDisasterDetail()
-    #     _detail_info_3.raw_text_id = 3
-    #     _detail_info_3.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     _detail_info_3.sub_category = "建物火災"
-    #     _detail_info_3.open_dt = datetime.datetime(2024, 12, 23, 0, 12)
-    #     _detail_info_3.close_dt = None
-    #     _detail_info_3.status = niigata_datamodel.DisasterStatus.発生
-    #     _detail_info_3.address1 = None
-    #     _detail_info_3.address2 = "町名"
-    #     _detail_info_3.address3 = "N丁目"
-    #     raw_text_data_3.detail_info = _detail_info_3
-
-    #     # テストデータ登録
-    #     session = util_db_manager.SESSION()
-    #     try:
-    #         session.add_all([raw_text_data_1, raw_text_data_2, raw_text_data_3])
-    #         session.commit()
-
-    #         # mocker登録（リクエスト処理用）
-    #         mocker.patch("util_request_wrapper.post_to_discord", return_value=True)
-
-    #         # テスト実行
-    #         instance = FwdNiigata()
-    #         instance._notify()
-
-    #         # テスト結果確認（Statusにより確認）
-    #         assert (
-    #             session.query(niigata_datamodel.niigataRawText)
-    #             .filter(niigata_datamodel.niigataRawText.id == 1)
-    #             .first()
-    #             .notify_status
-    #             == niigata_datamodel.NotifyStatus.NOTIFIED
-    #         )
-    #         assert (
-    #             session.query(niigata_datamodel.niigataRawText)
-    #             .filter(niigata_datamodel.niigataRawText.id == 2)
-    #             .first()
-    #             .notify_status
-    #             == niigata_datamodel.NotifyStatus.SKIPPED
-    #         )
-    #         assert (
-    #             session.query(niigata_datamodel.niigataRawText)
-    #             .filter(niigata_datamodel.niigataRawText.id == 3)
-    #             .first()
-    #             .notify_status
-    #             == niigata_datamodel.NotifyStatus.NOTIFIED
-    #         )
-
-    #     finally:
-    #         # テスト用に投入したデータを削除
-    #         session.query(niigata_datamodel.niigataRawText).delete()
-    #         session.query(niigata_datamodel.niigataDisasterDetail).delete()
-    #         session.commit()
-
-    # def test_notify_exception(self, mocker: MockFixture, setup_logger, setup_db):
-    #     # テストデータの作成
-    #     # 発生系
-    #     raw_text_data_1 = niigata_datamodel.niigataRawText()
-    #     raw_text_data_1.id = 1
-    #     raw_text_data_1.raw_text = (
-    #         "12月23日 01:23 長岡市 町名 N丁目に建物火災のため消防車が出動しました。"
-    #     )
-    #     raw_text_data_1.retr_dt = datetime.datetime.now()
-    #     raw_text_data_1.text_pos = niigata_datamodel.TextPosition.CURR
-    #     raw_text_data_1.notify_status = niigata_datamodel.NotifyStatus.NOT_YET
-    #     _detail_info_1 = niigata_datamodel.niigataDisasterDetail()
-    #     _detail_info_1.raw_text_id = 1
-    #     _detail_info_1.main_category = niigata_datamodel.DisasterMainCategory.火災
-    #     _detail_info_1.sub_category = "建物火災"
-    #     _detail_info_1.open_dt = datetime.datetime(2024, 12, 23, 1, 23)
-    #     _detail_info_1.close_dt = None
-    #     _detail_info_1.status = niigata_datamodel.DisasterStatus.発生
-    #     _detail_info_1.address1 = None
-    #     _detail_info_1.address2 = "町名"
-    #     _detail_info_1.address3 = "N丁目"
-    #     raw_text_data_1.detail_info = _detail_info_1
-
-    #     # テストデータ登録
-    #     session = util_db_manager.SESSION()
-    #     try:
-    #         session.add(raw_text_data_1)
-    #         session.commit()
-
-    #         # mocker登録（リクエスト処理用）
-    #         with mocker.patch(
-    #             "util_request_wrapper.post_to_discord", side_effect=Exception
-    #         ):
-    #             with pytest.raises(Exception):
-    #                 # テスト実行
-    #                 instance = FwdNiigata()
-    #                 instance._notify()
-
-    #     finally:
-    #         # テスト用に投入したデータを削除
-    #         session.query(niigata_datamodel.niigataRawText).delete()
-    #         session.query(niigata_datamodel.niigataDisasterDetail).delete()
-    #         session.commit()
+        finally:
+            # テスト用に投入したデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.commit()
 
     def test_analyze_text(self, setup_logger):
         # 基本テストデータ
