@@ -1163,29 +1163,34 @@ class TestNiigataMain:
         output_data = instance._create_notify_text_disaster(input_data)
         assert expected_data == output_data
 
-    # def test_execute(self, mocker: MockFixture, setup_logger):
-    #     instance = FwdNiigata()
-    #     # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
-    #     with (
-    #         mocker.patch("util_request_wrapper.download_webpage", return_value="dummy"),
-    #         mocker.patch(
-    #             "niigata_main.FwdNiigata._cleansing_webtext", return_value="dummy"
-    #         ),
-    #         mocker.patch(
-    #             "niigata_main.FwdNiigata._split_webtext",
-    #             return_value=("dummy", "dummy"),
-    #         ),
-    #         mocker.patch(
-    #             "niigata_main.FwdNiigata._commit_disaster_list_curr", return_value=None
-    #         ),
-    #         mocker.patch(
-    #             "niigata_main.FwdNiigata._commit_disaster_list_curr", return_value=None
-    #         ),
-    #         mocker.patch("niigata_main.FwdNiigata._analyze", return_value=None),
-    #         mocker.patch("niigata_main.FwdNiigata._notify", return_value=None),
-    #     ):
-    #         execute_result = instance.execute()
-    #         assert execute_result is True
+    def test_execute(self, mocker: MockFixture, setup_logger):
+        instance = FwdNiigata()
+        # 各関数の内部はそれぞれのUTでテストするため、内部処理はmock化する
+        with (
+            mocker.patch("util_request_wrapper.download_webpage", return_value="dummy"),
+            mocker.patch(
+                "niigata_main.FwdNiigata._split_webtext",
+                return_value=("dummy", "dummy"),
+            ),
+            mocker.patch(
+                "niigata_main.FwdNiigata._commit_disaster_list_notice",
+                return_value=None,
+            ),
+            mocker.patch(
+                "niigata_main.FwdNiigata._commit_disaster_list_close", return_value=None
+            ),
+            mocker.patch(
+                "niigata_main.FwdNiigata._commit_disaster_list_chinka",
+                return_value=None,
+            ),
+            mocker.patch(
+                "niigata_main.FwdNiigata._commit_disaster_list_curr", return_value=None
+            ),
+            mocker.patch("niigata_main.FwdNiigata._analyze", return_value=None),
+            mocker.patch("niigata_main.FwdNiigata._notify", return_value=None),
+        ):
+            execute_result = instance.execute()
+            assert execute_result is True
 
     # def test_execute_exception(self, mocker: MockFixture, setup_logger):
     #     instance = FwdNiigata()
