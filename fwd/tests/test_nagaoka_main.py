@@ -29,7 +29,7 @@ import util_db_manager
 import util_logger_initializer
 from nagaoka_main import FwdNagaoka
 
-TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
+TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource" / "nagaoka"
 
 
 @pytest.fixture(scope="session")
@@ -761,11 +761,7 @@ class TestNagaokaMain:
     ):
         try:
             # テストデータ読み込み
-            input_file_path = (
-                Path(__file__).parents[1]
-                / "tests_resource"
-                / "nagaoka_webtext_1_expected_curr.txt"
-            )
+            input_file_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_curr.txt"
             webpage_text_curr = input_file_path.read_text(encoding="utf-8")
 
             # テスト実行
@@ -801,11 +797,7 @@ class TestNagaokaMain:
     ):
         try:
             # テストデータ読み込み
-            input_file_path = (
-                Path(__file__).parents[1]
-                / "tests_resource"
-                / "nagaoka_webtext_1_expected_curr.txt"
-            )
+            input_file_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_curr.txt"
             webpage_text_curr = input_file_path.read_text(encoding="utf-8")
 
             # テスト実行
@@ -850,11 +842,7 @@ class TestNagaokaMain:
     ):
         try:
             # テストデータ読み込み
-            input_file_path = (
-                Path(__file__).parents[1]
-                / "tests_resource"
-                / "nagaoka_webtext_1_expected_past.txt"
-            )
+            input_file_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_past.txt"
             webpage_text_past = input_file_path.read_text(encoding="utf-8")
 
             # テスト実行
@@ -890,11 +878,7 @@ class TestNagaokaMain:
     ):
         try:
             # テストデータ読み込み
-            input_file_path = (
-                Path(__file__).parents[1]
-                / "tests_resource"
-                / "nagaoka_webtext_1_expected_past.txt"
-            )
+            input_file_path = TEST_RESOURCE_DIR / "nagaoka_webtext_1_expected_past.txt"
             webpage_text_past = input_file_path.read_text(encoding="utf-8")
 
             # テスト実行
@@ -971,9 +955,7 @@ class TestNagaokaMain:
         session = util_db_manager.SESSION()
         try:
             # テスト実行
-            _text_dir = (
-                Path(__file__).parents[1] / "tests_resource" / "store_old_data_test"
-            )
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test"
             instance.store_old_data(_text_dir.as_posix())
 
             # テスト結果（登録件数）を確認
@@ -1028,11 +1010,7 @@ class TestNagaokaMain:
         instance = FwdNagaoka()
         session = util_db_manager.SESSION()
         try:
-            _text_dir = (
-                Path(__file__).parents[1]
-                / "tests_resource"
-                / "store_old_data_test_invalid_files"
-            )
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test_invalid_files"
 
             # テスト対象関数を実行
             instance.store_old_data(_text_dir.as_posix())
@@ -1053,9 +1031,7 @@ class TestNagaokaMain:
         instance = FwdNagaoka()
         session = util_db_manager.SESSION()
         try:
-            _text_dir = (
-                Path(__file__).parents[1] / "tests_resource" / "store_old_data_test"
-            )
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test"
 
             # テスト対象関数を実行
             with mocker.patch(

@@ -38,7 +38,7 @@ from niigata_datamodel import (
 )
 from niigata_main import FwdNiigata
 
-TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource"
+TEST_RESOURCE_DIR = Path(__file__).parents[1] / "tests_resource" / "niigata"
 
 
 @pytest.fixture(scope="session")
