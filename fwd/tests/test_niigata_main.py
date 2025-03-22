@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import requests
 import yaml
 from pytest_mock import MockFixture
 
@@ -1192,13 +1193,13 @@ class TestNiigataMain:
             execute_result = instance.execute()
             assert execute_result is True
 
-    # def test_execute_exception(self, mocker: MockFixture, setup_logger):
-    #     instance = FwdNiigata()
-    #     with mocker.patch(
-    #         "util_request_wrapper.download_webpage", side_effect=requests.HTTPError
-    #     ):
-    #         execute_result = instance.execute()
-    #         assert execute_result is False
+    def test_execute_exception(self, mocker: MockFixture, setup_logger):
+        instance = FwdNiigata()
+        with mocker.patch(
+            "util_request_wrapper.download_webpage", side_effect=requests.HTTPError
+        ):
+            execute_result = instance.execute()
+            assert execute_result is False
 
     # def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
     #     instance = FwdNiigata()
