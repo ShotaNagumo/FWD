@@ -1205,6 +1205,18 @@ class TestNiigataMain:
     #     instance = FwdNiigata()
     #     session = util_db_manager.SESSION()
     #     try:
+    #         pass
+    #     finally:
+    #         # テスト結果として保存されたデータを削除
+    #         session.query(NiigataRawText).delete()
+    #         session.query(NiigataDisasterDetail).delete()
+    #         session.query(NiigataNoticeText).delete()
+    #         session.commit()
+
+    # def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
+    #     instance = FwdNiigata()
+    #     session = util_db_manager.SESSION()
+    #     try:
     #         # テスト実行
     #         _text_dir = (
     #             Path(__file__).parents[1] / "tests_resource" / "store_old_data_test"
