@@ -1201,17 +1201,19 @@ class TestNiigataMain:
             execute_result = instance.execute()
             assert execute_result is False
 
-    # def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
-    #     instance = FwdNiigata()
-    #     session = util_db_manager.SESSION()
-    #     try:
-    #         pass
-    #     finally:
-    #         # テスト結果として保存されたデータを削除
-    #         session.query(NiigataRawText).delete()
-    #         session.query(NiigataDisasterDetail).delete()
-    #         session.query(NiigataNoticeText).delete()
-    #         session.commit()
+    def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
+        instance = FwdNiigata()
+        session = util_db_manager.SESSION()
+        try:
+            # テスト対象機能の実行
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test"
+            instance.store_old_data(_text_dir.as_posix())
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.query(NiigataNoticeText).delete()
+            session.commit()
 
     # def test_store_old_data(self, mocker: MockFixture, setup_logger, setup_db):
     #     instance = FwdNiigata()
