@@ -1207,7 +1207,60 @@ class TestNiigataMain:
         try:
             # テスト対象機能の実行
             _text_dir = TEST_RESOURCE_DIR / "store_old_data_test"
-            instance.store_old_data(_text_dir.as_posix())
+            result = instance.store_old_data(_text_dir.as_posix())
+            assert result is True
+
+            # テスト結果の取得
+            results = session.query(NiigataRawText).all()
+            # 災害件数の期待値：1ファイル目発生3 + 2ファイル目終了3 + 2ファイル目発生1
+            assert len(results) == (3 + 3 + 1)
+            # 取得時刻がファイル名から設定されていること（先頭・末尾を抜き出し確認）
+            assert results[0].retr_dt == datetime.datetime(2023, 1, 3, 12, 18)
+            assert results[6].retr_dt == datetime.datetime(2023, 1, 3, 12, 57)
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_store_old_data_exception(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        instance = FwdNiigata()
+        session = util_db_manager.SESSION()
+        try:
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test"
+
+            # テスト対象機能の実行
+            with mocker.patch(
+                "niigata_main.FwdNiigata._commit_disaster_list_curr",
+                side_effect=Exception,
+            ):
+                result = instance.store_old_data(_text_dir.as_posix())
+                assert result is False
+        finally:
+            # テスト結果として保存されたデータを削除
+            session.query(NiigataRawText).delete()
+            session.query(NiigataDisasterDetail).delete()
+            session.query(NiigataNoticeText).delete()
+            session.commit()
+
+    def test_store_old_data_exception_ファイル名不正(
+        self, mocker: MockFixture, setup_logger, setup_db
+    ):
+        instance = FwdNiigata()
+        session = util_db_manager.SESSION()
+        try:
+            # テスト対象機能の実行
+            _text_dir = TEST_RESOURCE_DIR / "store_old_data_test_invalid_files"
+            result = instance.store_old_data(_text_dir.as_posix())
+            assert result is True
+
+            # 実行結果の取得
+            results = session.query(NiigataRawText).all()
+            # 期待値：1ファイル目発生3 + 2ファイル目0（ファイル名不正のためスキップ）
+            assert len(results) == 3
         finally:
             # テスト結果として保存されたデータを削除
             session.query(NiigataRawText).delete()
