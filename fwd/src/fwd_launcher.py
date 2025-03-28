@@ -16,6 +16,7 @@ def create_config_file(args):
     data = {}
     data["variable_dir"] = input("variable_dir: ")
     data["nagaoka_webhook_url"] = input("webhook_url(nagaoka): ")
+    data["niigata_webhook_url"] = input("webhook_url(niigata): ")
 
     # 設定ファイルを作成する
     fwd_config_template = _j2_env.get_template("fwd_config.j2")
