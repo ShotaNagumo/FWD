@@ -1,10 +1,30 @@
 import argparse
+from pathlib import Path
 
 import util_config
 from jinja2 import Environment, FileSystemLoader
 
 CONFIG_FILE_PATH = util_config.get_config_dir() / "fwd_config.yaml"
 LOG_FORMAT_FILE_PATH = util_config.get_config_dir() / "fwd_log_format.yaml"
+
+
+def create_run_script(args):
+    # Jinja2設定
+    _template_dir = util_config.get_resource_dir() / "launcher" / "template"
+    _j2_env = Environment(loader=FileSystemLoader(_template_dir))
+
+    # 設定する値を読み取り
+    data = {}
+    data["fwd_install_dir"] = input("fwd_install_dir: ")
+
+    # RUNスクリプトの出力パス
+    run_script_path = Path(data["fwd_install_dir"]) / "FWD_RUN.sh"
+
+    # RUNスクリプトを作成する
+    run_script_template = _j2_env.get_template("FWD_RUN.j2")
+    run_script_text = run_script_template.render(data)
+    run_script_path.write_text(run_script_text, encoding="utf-8")
+    print(f'Generated FWD_RUN.sh: "{run_script_path}"')
 
 
 def create_config_file(args):
@@ -95,6 +115,10 @@ def _create_argparser() -> argparse.ArgumentParser:
     # 設定ファイルを作成するコマンド定義
     parser_create_config = subparsers.add_parser("create_config")
     parser_create_config.set_defaults(func=create_config_file)
+
+    # RUNスクリプトを作成するコマンド定義
+    parser_create_run = subparsers.add_parser("create_run")
+    parser_create_run.set_defaults(func=create_run_script)
 
     # 各FWDクラスをセットアップするコマンド定義
     parser_setup_fwd = subparsers.add_parser("setup_fwd")

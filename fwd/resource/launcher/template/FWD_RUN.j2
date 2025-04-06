@@ -1,0 +1,7 @@
+#!/bin/bash
+
+source {{ fwd_install_dir }}/.venv/bin/activate
+uv run {{ fwd_install_dir }}/src/fwd_launcher.py execute_nagaoka
+uv run {{ fwd_install_dir }}/src/fwd_launcher.py execute_niigata
+deactivate
+
