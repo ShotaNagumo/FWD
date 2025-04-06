@@ -20,6 +20,12 @@
 {%- endif -%}
 {% endblock %}
 
+{% block map_link %}
+{%- if not address1 -%}
+MAP: https://www.google.com/maps/search/?api=1&query=長岡市{{ address2 }}{{ address3 }}
+{%- endif -%}
+{% endblock %}
+
 {% block timestamp %}
 {%- if close_dt -%}
 終了日時：{{ close_dt }} （発生日時：{{ open_dt }}）
