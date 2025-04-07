@@ -162,6 +162,7 @@ class TestNagaokaMain:
             "[長岡消防] 【火災】 市町村名 町名 N丁目\n"
             "災害詳細：建物火災\n"
             "発生日時：2025/01/23 01:59\n"
+            "MAP: https://www.google.com/maps/search/?api=1&query=市町村名町名N丁目"
         )
 
         # テスト（住所1, 2, 3）
@@ -176,6 +177,7 @@ class TestNagaokaMain:
             "[長岡消防] 【火災】 市町村名 町名\n"
             "災害詳細：建物火災\n"
             "発生日時：2025/01/23 01:59\n"
+            "MAP: https://www.google.com/maps/search/?api=1&query=市町村名町名"
         )
 
         # テスト（住所1, 2）
@@ -192,6 +194,25 @@ class TestNagaokaMain:
 
         # テスト（住所2）
         rendered_text = instance._create_notify_text(input_data)
+
+        # 入力値（住所1, 2, 3）
+        input_data.address1 = "高速"
+        input_data.address2 = "関越道"
+        input_data.address3 = "上り"
+        input_data.sub_category = "高速道車両火災"
+        input_data.status = nagaoka_datamodel.DisasterStatus.発生
+        input_data.close_dt = None
+
+        # 期待値（住所1, 2, 3：高速）
+        expected_data = (
+            "[長岡消防] 【火災】 高速 関越道 上り\n"
+            "災害詳細：高速道車両火災\n"
+            "発生日時：2025/01/23 01:59"
+        )
+
+        # テスト（住所1, 2, 3：高速）
+        rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
 
     def test_create_notify_text_exception(self, mocker: MockFixture, setup_logger):
         instance = FwdNagaoka()
