@@ -520,7 +520,7 @@ class FwdNagaoka:
             template = self._j2_env.get_template("notify.j2")
             data = self._create_data_for_create_notify_text(detail_data)
             notify_text = template.render(data)
-            return notify_text
+            return notify_text.strip()
         except Exception:
             self._logger.error("通知文の作成に失敗")
             raise
