@@ -546,6 +546,13 @@ class FwdNagaoka:
             "address2": detail_data.address2,
             "address3": detail_data.address3,
         }
+        # address1/3がNoneの場合の補正（空文字に変換する）
+        if detail_data.address1 is None:
+            data["address1"] = ""
+        if detail_data.address3 is None:
+            data["address3"] = ""
+
+        # close_dtの設定
         if detail_data.close_dt:
             data["close_dt"] = detail_data.close_dt.strftime(datetime_format_str)
         else:
