@@ -129,7 +129,7 @@ class TestNagaokaMain:
             "[長岡消防] 【火災】 町名 N丁目\n"
             "災害詳細：建物火災\n"
             "発生日時：2025/01/23 01:59\n"
-            "MAP: https://www.google.com/maps/search/?api=1&query=長岡市町名N丁目"
+            "MAP：https://www.google.com/maps/search/?api=1&query=長岡市町名N丁目"
         )
 
         # テスト（発生系）
@@ -145,7 +145,7 @@ class TestNagaokaMain:
             "[長岡消防] 【鎮火】 町名 N丁目\n"
             "災害詳細：建物火災\n"
             "終了日時：2025/01/23 02:59 （発生日時：2025/01/23 01:59）\n"
-            "MAP: https://www.google.com/maps/search/?api=1&query=長岡市町名N丁目"
+            "MAP：https://www.google.com/maps/search/?api=1&query=長岡市町名N丁目"
         )
 
         # テスト（終了系）
@@ -162,7 +162,7 @@ class TestNagaokaMain:
             "[長岡消防] 【火災】 市町村名 町名 N丁目\n"
             "災害詳細：建物火災\n"
             "発生日時：2025/01/23 01:59\n"
-            "MAP: https://www.google.com/maps/search/?api=1&query=市町村名町名N丁目"
+            "MAP：https://www.google.com/maps/search/?api=1&query=市町村名町名N丁目"
         )
 
         # テスト（住所1, 2, 3）
@@ -177,7 +177,7 @@ class TestNagaokaMain:
             "[長岡消防] 【火災】 市町村名 町名\n"
             "災害詳細：建物火災\n"
             "発生日時：2025/01/23 01:59\n"
-            "MAP: https://www.google.com/maps/search/?api=1&query=市町村名町名"
+            "MAP：https://www.google.com/maps/search/?api=1&query=市町村名町名"
         )
 
         # テスト（住所1, 2）
@@ -190,7 +190,7 @@ class TestNagaokaMain:
         # 期待値（住所2）
         expected_data = (
             "[長岡消防] 【火災】 町名\n災害詳細：建物火災\n発生日時：2025/01/23 01:59\n"
-            "MAP: https://www.google.com/maps/search/?api=1&query=長岡市町名"
+            "MAP：https://www.google.com/maps/search/?api=1&query=長岡市町名"
         )
 
         # テスト（住所2）
