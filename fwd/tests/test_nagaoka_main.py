@@ -119,7 +119,7 @@ class TestNagaokaMain:
         input_data.sub_category = "建物火災"
         input_data.open_dt = datetime.datetime(2025, 1, 23, 1, 59)
         input_data.status = nagaoka_datamodel.DisasterStatus.発生
-        input_data.address1 = ""
+        input_data.address1 = None
         input_data.address2 = "町名"
         input_data.address3 = "N丁目"
         input_data.close_dt = None
@@ -182,6 +182,7 @@ class TestNagaokaMain:
 
         # テスト（住所1, 2）
         rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
 
         # 入力値（住所2）
         input_data.address1 = None
@@ -194,6 +195,7 @@ class TestNagaokaMain:
 
         # テスト（住所2）
         rendered_text = instance._create_notify_text(input_data)
+        assert expected_data == rendered_text
 
         # 入力値（住所1, 2, 3）
         input_data.address1 = "高速"
@@ -245,7 +247,7 @@ class TestNagaokaMain:
             "sub_category": "建物火災",
             "open_dt": _open_dt.strftime(r"%Y/%m/%d %H:%M"),
             "status": "発生",
-            "address1": None,
+            "address1": "",
             "address2": "町名",
             "address3": "N丁目",
             "close_dt": "",
