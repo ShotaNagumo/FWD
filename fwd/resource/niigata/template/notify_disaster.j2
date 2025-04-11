@@ -1,2 +1,5 @@
 [新潟消防] 【{{ main_category }}】 {{ address }}
 発生日時：{{ open_dt }}
+{%- if address_for_map -%}
+MAP：https://www.google.com/maps/search/?api=1&query={{ address_for_map  }}
+{%- endif -%}
