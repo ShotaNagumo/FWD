@@ -1091,18 +1091,30 @@ class TestNiigataMain:
         # テスト(address1のみ)
         input_data.address1 = "中央区"
         expected_data["address"] = "中央区"
+        expected_data["address_for_map"] = "新潟市中央区"
         output_data = instance._create_notify_data_by_disaster(input_data)
         assert expected_data == output_data
 
         # テスト(address1+address2)
         input_data.address2 = "〇〇"
         expected_data["address"] = "中央区 〇〇"
+        expected_data["address_for_map"] = "新潟市中央区〇〇"
         output_data = instance._create_notify_data_by_disaster(input_data)
         assert expected_data == output_data
 
         # テスト(address1+address2+address3)
         input_data.address3 = "N丁目"
         expected_data["address"] = "中央区 〇〇 N丁目"
+        expected_data["address_for_map"] = "新潟市中央区〇〇N丁目"
+        output_data = instance._create_notify_data_by_disaster(input_data)
+        assert expected_data == output_data
+
+        # テスト(地図を表示しない住所パターン)
+        input_data.address1 = "新潟バイパス"
+        input_data.address2 = "黒埼方向"
+        input_data.address3 = "逢谷内IC->竹尾IC"
+        expected_data["address"] = "新潟バイパス 黒埼方向 逢谷内IC->竹尾IC"
+        expected_data["address_for_map"] = ""
         output_data = instance._create_notify_data_by_disaster(input_data)
         assert expected_data == output_data
 
@@ -1157,7 +1169,8 @@ class TestNiigataMain:
 
         # 期待値
         expected_data = (
-            "[新潟消防] 【火災】 中央区 〇〇 N丁目\n発生日時：2025/01/23 12:34"
+            "[新潟消防] 【火災】 中央区 〇〇 N丁目\n発生日時：2025/01/23 12:34\n"
+            "MAP：https://www.google.com/maps/search/?api=1&query=新潟市中央区〇〇N丁目"
         )
 
         # テスト実行
