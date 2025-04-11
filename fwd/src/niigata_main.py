@@ -733,7 +733,7 @@ class FwdNiigata:
             template = self._j2_env.get_template("notify_notice.j2")
             data = self._create_notify_data_by_notice(notice_data)
             notify_text = template.render(data)
-            return notify_text
+            return notify_text.strip()
         except Exception:
             self._logger.error("通知文の作成に失敗")
             raise
@@ -751,7 +751,7 @@ class FwdNiigata:
             template = self._j2_env.get_template("notify_disaster.j2")
             data = self._create_notify_data_by_disaster(detail_data)
             notify_text = template.render(data)
-            return notify_text
+            return notify_text.strip()
         except Exception:
             self._logger.error("通知文の作成に失敗")
             raise
@@ -768,15 +768,38 @@ class FwdNiigata:
             dict[str, str]: 通知文を作成するために使用するデータ
         """
         datetime_format_str = r"%Y/%m/%d %H:%M"
+
+        # 時刻、災害種別
         data = {
             "main_category": detail_data.main_category.name,
             "open_dt": detail_data.open_dt.strftime(datetime_format_str),
         }
+
+        # 住所（表示用）
         addr_list = []
         for addr in (detail_data.address1, detail_data.address2, detail_data.address3):
             if addr:
                 addr_list.append(addr)
         data["address"] = " ".join(addr_list)
+
+        # 住所（地図表示用）
+        ignore_addr_pat_list = [
+            "バイパス",
+            "北陸道",
+            "日東道",
+            "磐越道",
+            "角田山",
+            "みなとトンネル",
+        ]
+        data["address_for_map"] = ""
+        for ignore_addr_pat in ignore_addr_pat_list:
+            if re.search(ignore_addr_pat, detail_data.address1):
+                # 地図を表示しない住所パターンに該当する場合はそのままreturnに進む
+                break
+        else:
+            # 地図を表示する住所パターンの場合は地図用の住所文字列を設定する
+            _address_for_map = "".join(addr_list)
+            data["address_for_map"] = f"新潟市{_address_for_map}"
 
         return data
 
