@@ -546,6 +546,11 @@ class FwdNagaoka:
             "address2": detail_data.address2,
             "address3": detail_data.address3,
         }
+
+        # 救急活動の場合の補正
+        if detail_data.main_category == DisasterMainCategory.救急支援:
+            data["main_category"] = "ＰＡ"
+
         # address1/3がNoneの場合の補正（空文字に変換する）
         if detail_data.address1 is None:
             data["address1"] = ""

@@ -775,6 +775,10 @@ class FwdNiigata:
             "open_dt": detail_data.open_dt.strftime(datetime_format_str),
         }
 
+        # 救急活動の場合の補正
+        if detail_data.main_category == DisasterMainCategory.救急支援:
+            data["main_category"] = "ＰＡ"
+
         # 住所（表示用）
         addr_list = []
         for addr in (detail_data.address1, detail_data.address2, detail_data.address3):
