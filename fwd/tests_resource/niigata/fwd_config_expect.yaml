@@ -1,3 +1,5 @@
 variable_dir: D:/work/fwd/variable
 nagaoka:
   webhook_url: https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz
+niigata:
+  webhook_url: https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz

@@ -15,6 +15,7 @@ class TestUtilLoggerInitializer:
         setting_file_path = (
             Path(__file__).parents[1]
             / "tests_resource"
+            / "niigata"
             / "test_util_logger_initializer_1.yaml"
         )
 

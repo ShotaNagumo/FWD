@@ -21,6 +21,7 @@ def logger_setup():
     log_format_file_path = (
         Path(__file__).parents[1]
         / "tests_resource"
+        / "niigata"
         / "test_util_logger_initializer_1.yaml"
     )
     fwd_launcher.LOG_FORMAT_FILE_PATH = log_format_file_path
@@ -96,13 +97,19 @@ class TestFwdLauncher:
 
         # config正解データ読み込み
         config_expect_file_path = (
-            Path(__file__).parents[1] / "tests_resource" / "fwd_config_expect.yaml"
+            Path(__file__).parents[1]
+            / "tests_resource"
+            / "niigata"
+            / "fwd_config_expect.yaml"
         )
         config_expect_data = config_expect_file_path.read_text(encoding="utf-8")
 
         # log_format正解データ読み込み
         log_format_expect_file_path = (
-            Path(__file__).parents[1] / "tests_resource" / "fwd_log_format_expect.yaml"
+            Path(__file__).parents[1]
+            / "tests_resource"
+            / "niigata"
+            / "fwd_log_format_expect.yaml"
         )
         log_format_expect_data = log_format_expect_file_path.read_text(encoding="utf-8")
 
@@ -116,6 +123,7 @@ class TestFwdLauncher:
             # テスト対象関数実行
             effects = [
                 "D:/work/fwd/variable",
+                "https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz",
                 "https://discordapp.com/api/webhooks/0123456789/abcdefghijklmnopqrstuvwxyz",
             ]
             with mocker.patch("builtins.input", side_effect=effects):
