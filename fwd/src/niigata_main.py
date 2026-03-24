@@ -12,6 +12,7 @@ import util_config
 import util_db_manager
 import util_request_wrapper
 import yaml
+from bs4 import BeautifulSoup
 from jinja2 import Environment, FileSystemLoader
 from niigata_datamodel import (
     DisasterMainCategory,
@@ -71,19 +72,20 @@ class FwdNiigata:
             )
 
             # 災害情報テキストを分割
-            webpage_text_div = self._split_webtext(webpage_text)
+            top_info_text = self._get_topinfo_text(webpage_text)
+            news_text = self._get_news_text(webpage_text)
 
             # 案内情報をDBへ登録する
-            self._commit_disaster_list_notice(webpage_text_div[0])
+            self._commit_disaster_list_notice(top_info_text)
 
             # 終了情報をDBへ登録する
-            self._commit_disaster_list_close(webpage_text_div[1])
+            self._commit_disaster_list_close(news_text)
 
             # 鎮火情報をDBへ登録する
-            self._commit_disaster_list_chinka(webpage_text_div[1])
+            self._commit_disaster_list_chinka(news_text)
 
             # 災害情報をDBへ登録する
-            self._commit_disaster_list_curr(webpage_text_div[1])
+            self._commit_disaster_list_curr(news_text)
 
             # 災害情報の解析
             self._analyze()
@@ -136,19 +138,20 @@ class FwdNiigata:
 
                 # 災害情報テキストを前処理・分割
                 webpage_text = unicodedata.normalize("NFKC", webpage_text)
-                webpage_text_div = self._split_webtext(webpage_text)
+                topinfo_text = self._get_topinfo_text(webpage_text)
+                news_text = self._get_news_text(webpage_text)
 
                 # 案内情報をDBへ登録する
-                self._commit_disaster_list_notice(webpage_text_div[0], retrieve_time)
+                self._commit_disaster_list_notice(topinfo_text, retrieve_time)
 
                 # 終了情報をDBへ登録する
-                self._commit_disaster_list_close(webpage_text_div[1], retrieve_time)
+                self._commit_disaster_list_close(news_text, retrieve_time)
 
                 # 鎮火情報をDBへ登録する
-                self._commit_disaster_list_chinka(webpage_text_div[1], retrieve_time)
+                self._commit_disaster_list_chinka(news_text, retrieve_time)
 
                 # 災害情報をDBへ登録する
-                self._commit_disaster_list_curr(webpage_text_div[1], retrieve_time)
+                self._commit_disaster_list_curr(news_text, retrieve_time)
 
                 # 災害情報の解析
                 self._analyze()
@@ -162,54 +165,62 @@ class FwdNiigata:
             self._logger.exception("store_old_data() 実行失敗")
             return False
 
-    def _split_webtext(self, webpage_text: str) -> list[str]:
-        """htmlテキストを、「案内情報表示エリア」と「最新出動情報表示エリア」
-           に分割する
+    def _get_topinfo_text(self, webpage_text: str) -> str:
+        """TopInfo部分のテキストを抜き出す
 
         Args:
-            webpage_text (str): 災害情報を含むWebページのテキスト
-
-        Raises:
-            ValueError: 処理に失敗した場合
+            webpage_text (str): htmlテキスト
 
         Returns:
-            list[str]: [0]: 案内情報の文字列、[1]: 最新出動情報の文字列
+            str: TopInfo部分のテキスト
         """
+        # 解析情報
+        soup = BeautifulSoup(webpage_text, "html.parser")
 
-        # 案内情報表示エリアの内容を取得する
-        pat_notice = re.compile(
-            r"""(.+)<div id="topInformation"><h2>\s*(\S+?)\s*</h2>(.+)""", re.DOTALL
-        )
-        if not (m_notice := pat_notice.match(webpage_text)):
-            notice_text = ""
+        # 解析
+        top_info = soup.find("div", id="topInformation")
+        if top_info is None:
+            # 案内情報存在しない場合、空文字を返却する
+            return ""
         else:
-            notice_text = m_notice.group(2)
+            return top_info.find("h2").text.strip()
 
-        # 最新出動情報エリアの内容を取得する
-        pat_curr = re.compile(r"""(.+)<p id="newInfo">(.+?)</p>(.+)""", re.DOTALL)
-        if not (m_curr := pat_curr.match(webpage_text)):
-            # 検索に失敗した場合はValueErrorとする（災害情報掲示の仕様変更などの場合を想定）
-            raise ValueError("案内情報/最新出動情報の災害情報分割失敗")
-        curr_text = m_curr.group(2)
+    def _get_news_text(self, webpage_text: str) -> list[str]:
+        """News部分（現在の出動情報部分）のテキストを抜き出す
 
-        # 検索結果を返却
-        return [
-            notice_text,
-            curr_text,
-        ]
+        Args:
+            webpage_text (str): htmlテキスト
 
-    def _commit_disaster_list_notice(self, webpage_text_notice: str, execute_dt=None):
+        Returns:
+            list[str]: News部分のテキストを<br>タグで分割した状態のテキスト
+        """
+        # 解析情報
+        soup = BeautifulSoup(webpage_text, "html.parser")
+
+        # 解析
+        news_info = soup.find("div", id="news")
+        if news_info is None:
+            # 最新出動情報存在しない場合、空文字を返却する
+            return list()
+        else:
+            news_info_text = news_info.find("p", id="newInfo").text
+            news_info_list = re.split(r"<br>", news_info_text)
+            for text in news_info_list:
+                text = text.strip()
+            return news_info_list
+
+    def _commit_disaster_list_notice(self, webpage_text_topinfo: str, execute_dt=None):
         """案内情報をDBに登録する
 
         Args:
-            webpage_text_notice (str): 案内情報の文字列
+            webpage_text_topinfo (str): 災害情報テキスト（TopInfo）
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
 
         session = util_db_manager.SESSION()
         try:
             # 案内情報が空の場合は処理不要
-            if not webpage_text_notice:
+            if not webpage_text_topinfo:
                 return
 
             # execute_dt の指定状況に応じ、登録する情報を決定する
@@ -221,7 +232,7 @@ class FwdNiigata:
             # 登録済みかを確認する
             registered = bool(
                 session.query(NiigataNoticeText)
-                .filter(NiigataNoticeText.raw_text == webpage_text_notice)
+                .filter(NiigataNoticeText.raw_text == webpage_text_topinfo)
                 .count()
             )
 
@@ -230,7 +241,7 @@ class FwdNiigata:
                 # 登録する情報を作成する
                 notice_text_data = NiigataNoticeText(
                     notice_type=NoticeType.一般案内,
-                    raw_text=webpage_text_notice,
+                    raw_text=webpage_text_topinfo,
                     retr_dt=retrieve_dt,
                     notify_status=notify_stat,
                 )
@@ -249,11 +260,13 @@ class FwdNiigata:
         finally:
             session.close()
 
-    def _commit_disaster_list_chinka(self, webpage_text_curr: str, execute_dt=None):
+    def _commit_disaster_list_chinka(
+        self, webpage_text_news: list[str], execute_dt=None
+    ):
         """「最新出動情報」の文字列より、鎮火情報を抽出してDBに登録する
 
         Args:
-            webpage_text_curr (str): 「最新出動情報」の文字列
+            webpage_text_news (list[str]): 災害情報テキスト（News）
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
         session: Session = util_db_manager.SESSION()
@@ -265,11 +278,11 @@ class FwdNiigata:
                 NotifyStatus.NOT_YET if execute_dt is None else NotifyStatus.SKIPPED
             )
 
-            # 入力文字列を"<br>"で分割する
-            for chinka_text in re.split(r"<br>", webpage_text_curr):
+            for chinka_text in webpage_text_news:
                 # 災害情報の文字列を検索する
                 matches = re.search(
-                    r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。", chinka_text
+                    r"\d{2}時\d{2}分頃、.+?付近の火災は鎮火しました。",
+                    chinka_text.strip(),
                 )
 
                 # 鎮火情報無しの場合は次へ進む
@@ -312,11 +325,11 @@ class FwdNiigata:
         finally:
             session.close()
 
-    def _commit_disaster_list_curr(self, webpage_text_curr: str, execute_dt=None):
+    def _commit_disaster_list_curr(self, webpage_text_news: list[str], execute_dt=None):
         """「最新出動情報」の文字列より、災害発生状況を抽出してDBに登録する
 
         Args:
-            webpage_text_curr (str): 「最新出動情報」の文字列
+            webpage_text_news (list[str]): 災害情報テキスト（News）
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
 
@@ -331,12 +344,10 @@ class FwdNiigata:
             )
 
             # 文字列解析
-            matches = re.findall(
-                r"(\d{2}月\d{2}日\d{2}時\d{2}分頃、.+?出動しています。)",
-                webpage_text_curr,
-            )
-
-            for match_str in matches[::-1]:
+            for text in webpage_text_news:
+                match_str = re.search(
+                    r"(\d{2}月\d{2}日\d{2}時\d{2}分頃、.+?出動しています。)", text
+                )
                 # 登録済みかを確認する
                 registered = bool(
                     session.query(NiigataRawText)
@@ -369,11 +380,13 @@ class FwdNiigata:
         finally:
             session.close()
 
-    def _commit_disaster_list_close(self, webpage_text_curr: str, execute_dt=None):
+    def _commit_disaster_list_close(
+        self, webpage_text_news: list[str], execute_dt=None
+    ):
         """災害の終了を確認し、終了情報をDBに登録する
 
         Args:
-            webpage_text_curr (str): 「最新出動情報」の文字列
+            webpage_text_news (list[str]): 災害情報テキスト（News）
             execute_dt (datetime.datetime, optional): 文字列を取得した日時. Defaults to None.
         """
         session: Session = util_db_manager.SESSION()
@@ -381,6 +394,8 @@ class FwdNiigata:
 
         # 終了情報を登録する
         try:
+            # 解析
+
             # 発生中の災害情報一覧を取得する
             target_list = session.query(NiigataRawText).filter(
                 NiigataRawText.open_close_status == OpenCloseStatus.発生中
@@ -388,7 +403,12 @@ class FwdNiigata:
 
             for target in target_list:
                 # raw_text が webpage_text_curr に含まれているかを確認する
-                is_closed = not bool(re.search(target.raw_text, webpage_text_curr))
+                is_closed = False
+                for text in webpage_text_news:
+                    if re.search(target.raw_text, text):
+                        is_closed = True
+                        break
+
                 if is_closed:
                     # 終了情報を登録する
                     close_data = NiigataRawText()
