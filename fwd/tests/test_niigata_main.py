@@ -2,6 +2,7 @@ import datetime
 import logging
 import shutil
 import sys
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -82,54 +83,40 @@ def setup_db():
 
 
 class TestNiigataMain:
-    def test_split_webtext_topInformationなし(self, setup_logger):
-        instance = FwdNiigata()
+    def test_get_topinfo_text(self, setup_logger, setup_db):
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
 
-        # テスト入力ファイル
-        input_path = TEST_RESOURCE_DIR / "niigata_webtext_1.txt"
-        input_data = input_path.read_text(encoding="utf-8")
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_topinfo_1.htm"
+            webpage_text_topinfo = input_file_path.read_text(encoding="utf-8")
+            webpage_text_topinfo = unicodedata.normalize("NFKC", webpage_text_topinfo)
 
-        # テスト対象関数実行
-        output_top, output_newinfo = instance._split_webtext(input_data)
+            # TopInfo情報を取得できること
+            expect = "3月24日 07:32 林野火災注意報発令‐少雨や空気の乾燥により、林野火災が発生しやすい状態です。発令対象区域では、屋外での火の使用を控えるよう努めてください。"
+            topinfo_text = instance._get_topinfo_text(webpage_text_topinfo)
+            assert expect == topinfo_text
 
-        # 期待値データファイルを読み込み
-        expected_newinfo_path = (
-            TEST_RESOURCE_DIR / "niigata_webtext_1_expected_newinfo.txt"
-        )
-        expected_newinfo_data = expected_newinfo_path.read_text(encoding="utf-8")
+        finally:
+            pass
 
-        # 評価
-        assert output_top == ""
-        assert output_newinfo == expected_newinfo_data
+    def test_get_topinfo_text_topinfoなし(self, setup_logger, setup_db):
+        try:
+            # インスタンス作成
+            instance = FwdNiigata()
 
-    def test_split_webtext_topInformationあり(self, setup_logger):
-        instance = FwdNiigata()
+            # テストデータ読み込み
+            input_file_path = TEST_RESOURCE_DIR / "niigata_topinfo_2.htm"
+            webpage_text_topinfo = input_file_path.read_text(encoding="utf-8")
+            webpage_text_topinfo = unicodedata.normalize("NFKC", webpage_text_topinfo)
 
-        # テスト入力ファイル
-        input_path = TEST_RESOURCE_DIR / "niigata_webtext_2.txt"
-        input_data = input_path.read_text(encoding="utf-8")
+            # TopInfo情報が存在しない場合は空文字を返却すること
+            topinfo_text = instance._get_topinfo_text(webpage_text_topinfo)
+            assert "" == topinfo_text
 
-        # テスト対象関数実行
-        output_topinfo, output_newinfo = instance._split_webtext(input_data)
-
-        # 期待値データファイルを読み込み
-        expected_topinfo_path = (
-            TEST_RESOURCE_DIR / "niigata_webtext_2_expected_topinfo.txt"
-        )
-        expected_newinfo_path = (
-            TEST_RESOURCE_DIR / "niigata_webtext_2_expected_newinfo.txt"
-        )
-        expected_newinfo_data = expected_newinfo_path.read_text(encoding="utf-8")
-        expected_topinfo_data = expected_topinfo_path.read_text(encoding="utf-8")
-
-        # 評価
-        assert output_topinfo == expected_topinfo_data
-        assert output_newinfo == expected_newinfo_data
-
-    def test_split_webtext_exception(self, setup_logger):
-        instance = FwdNiigata()
-        with pytest.raises(ValueError):
-            instance._split_webtext("dummy")
+        finally:
+            pass
 
     def test_commit_disaster_list_notice(self, setup_logger, setup_db):
         session = util_db_manager.SESSION()
@@ -138,13 +125,13 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # テストデータ読み込み
-            input_file_path = (
-                TEST_RESOURCE_DIR / "niigata_webtext_2_expected_topinfo.txt"
-            )
-            webpage_text_notice = input_file_path.read_text(encoding="utf-8")
+            input_file_path = TEST_RESOURCE_DIR / "niigata_topinfo_3.htm"
+            webpage_text_topinfo = input_file_path.read_text(encoding="utf-8")
+            webpage_text_topinfo = unicodedata.normalize("NFKC", webpage_text_topinfo)
 
             # 案内情報を登録できること
-            instance._commit_disaster_list_notice(webpage_text_notice)
+            top_info = instance._get_topinfo_text(webpage_text_topinfo)
+            instance._commit_disaster_list_notice(top_info)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
             assert results[0].notice_type == NoticeType.一般案内
@@ -155,7 +142,7 @@ class TestNiigataMain:
             assert results[0].notify_status == NotifyStatus.NOT_YET
 
             # 同一内容を登録しないこと
-            instance._commit_disaster_list_notice(webpage_text_notice)
+            instance._commit_disaster_list_notice(top_info)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
 
@@ -219,21 +206,24 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # テストデータ読み込み
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_1.htm"
             webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            webpage_text_chinka = unicodedata.normalize("NFKC", webpage_text_chinka)
+            webpage_text_news = instance._get_news_text(webpage_text_chinka)
 
             # 鎮火情報を登録できること
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
             assert results[0].notice_type == NoticeType.鎮火情報
             assert (
-                results[0].raw_text == "16時45分頃、西区〇〇付近の火災は鎮火しました。"
+                results[0].raw_text
+                == "05時24分頃、東区〇〇〇付近の火災は鎮火しました。"
             )
             assert results[0].notify_status == NotifyStatus.NOT_YET
 
             # 同一内容を登録しないこと
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
 
@@ -251,15 +241,17 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # テストデータ読み込み
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_1.htm"
             webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            webpage_text_chinka = unicodedata.normalize("NFKC", webpage_text_chinka)
+            webpage_text_news = instance._get_news_text(webpage_text_chinka)
 
             # 12時間より前のデータを登録する
             dt = datetime.datetime.now() - datetime.timedelta(minutes=((12 * 60) + 1))
-            instance._commit_disaster_list_chinka(webpage_text_chinka, dt)
+            instance._commit_disaster_list_chinka(webpage_text_news, dt)
 
             # 12時間より前のデータは重複登録できることを確認する
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 2
             assert results[0].raw_text == results[1].raw_text
@@ -276,23 +268,30 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # 鎮火情報無しの場合登録されないこと（「災害は発生してません」文字列）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_4_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_2.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 0
 
             # 鎮火情報無しの場合登録されないこと（発生情報のみ）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_3.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 0
 
             # 鎮火情報無しの場合登録されないこと（空文字）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_6_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_4.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+            instance._commit_disaster_list_chinka(webpage_text_news)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 0
 
@@ -308,12 +307,14 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # テストデータ読み込み
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_1.htm"
             webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+            webpage_text_chinka = unicodedata.normalize("NFKC", webpage_text_chinka)
+            webpage_text_news = instance._get_news_text(webpage_text_chinka)
 
             # dtを指定して鎮火情報を登録できること
             dt = datetime.datetime(2025, 1, 2, 12, 34)
-            instance._commit_disaster_list_chinka(webpage_text_chinka, dt)
+            instance._commit_disaster_list_chinka(webpage_text_news, dt)
             results = session.query(NiigataNoticeText).all()
             assert len(results) == 1
             assert results[0].retr_dt == dt
@@ -331,28 +332,17 @@ class TestNiigataMain:
         instance = FwdNiigata()
 
         # テストデータ読み込み
-        input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_3_newinfo.txt"
+        input_file_path = TEST_RESOURCE_DIR / "niigata_news_1.htm"
         webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
+        webpage_text_chinka = unicodedata.normalize("NFKC", webpage_text_chinka)
+        webpage_text_news = instance._get_news_text(webpage_text_chinka)
 
         # 例外発生すること
         with (
             mocker.patch("sqlalchemy.orm.Session.query", side_effect=Exception),
             pytest.raises(Exception),
         ):
-            instance._commit_disaster_list_chinka(webpage_text_chinka)
-
-    @pytest.mark.skip
-    def test_create_testfile(self, setup_logger, setup_db):
-        import unicodedata
-
-        instance = FwdNiigata()
-        i_path = TEST_RESOURCE_DIR / "20220101_2158.txt"
-        o_path = i_path.with_name("niigata_webtext_7_newinfo.txt")
-
-        i_data = i_path.read_text(encoding="utf-8")
-        i_data = unicodedata.normalize("NFKC", i_data)
-        _, o_data = instance._split_webtext(i_data)
-        o_path.write_text(o_data, encoding="utf-8")
+            instance._commit_disaster_list_chinka(webpage_text_news)
 
     def test_commit_disaster_list_curr(self, setup_logger, setup_db):
         session = util_db_manager.SESSION()
@@ -361,30 +351,32 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # テストデータ読み込み
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
-            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_3.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
 
-            # 案内情報を登録できること
-            instance._commit_disaster_list_curr(webpage_text_curr)
+            # 災害情報を登録できること
+            instance._commit_disaster_list_curr(webpage_text_news)
             results = session.query(NiigataRawText).all()
             assert len(results) == 2
 
             assert (
                 results[0].raw_text
-                == "01月01日08時29分頃、西区〇〇6丁目付近で火災のため出動しています。"
+                == "02月22日16時17分頃、西区〇〇〇3の町付近で火災のため出動しています。"
             )
             assert results[0].notify_status == NotifyStatus.NOT_YET
             assert results[0].detail_info is None
 
             assert (
                 results[1].raw_text
-                == "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+                == "02月22日16時07分頃、西区〇〇〇〇2丁目付近で救急活動のため出動しています。"
             )
             assert results[1].notify_status == NotifyStatus.NOT_YET
             assert results[1].detail_info is None
 
             # 同一内容を登録しないこと
-            instance._commit_disaster_list_curr(webpage_text_curr)
+            instance._commit_disaster_list_curr(webpage_text_news)
             results = session.query(NiigataRawText).all()
             assert len(results) == 2
 
@@ -400,23 +392,29 @@ class TestNiigataMain:
             instance = FwdNiigata()
 
             # 災害情報無しの場合登録されないこと（「災害は発生してません」文字列）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_4_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_curr(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_2.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+            instance._commit_disaster_list_curr(webpage_text_news)
             results = session.query(NiigataRawText).all()
             assert len(results) == 0
 
             # 災害情報無しの場合登録されないこと（鎮火情報のみ）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_7_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_curr(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_5.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+            instance._commit_disaster_list_curr(webpage_text_news)
             results = session.query(NiigataRawText).all()
             assert len(results) == 0
 
             # 災害情報無しの場合登録されないこと（空文字）
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_6_newinfo.txt"
-            webpage_text_chinka = input_file_path.read_text(encoding="utf-8")
-            instance._commit_disaster_list_curr(webpage_text_chinka)
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_4.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
+            instance._commit_disaster_list_curr(webpage_text_news)
             results = session.query(NiigataRawText).all()
             assert len(results) == 0
 
@@ -433,8 +431,12 @@ class TestNiigataMain:
 
             # dtを指定し災害情報を登録できること
             dt = datetime.datetime(2025, 1, 2, 12, 34)
-            instance._commit_disaster_list_curr(
+            news_text = list()
+            news_text.append(
                 "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。",
+            )
+            instance._commit_disaster_list_curr(
+                news_text,
                 dt,
             )
             results = session.query(NiigataRawText).all()
@@ -459,7 +461,9 @@ class TestNiigataMain:
             pytest.raises(Exception),
         ):
             instance._commit_disaster_list_curr(
-                "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。"
+                [
+                    "01月01日09時11分頃、東区〇〇〇2丁目付近で救急活動のため出動しています。",
+                ]
             )
 
     def test_commit_disaster_list_close(self, setup_logger, setup_db):
@@ -488,11 +492,13 @@ class TestNiigataMain:
             session.commit()
 
             # テストデータ読み込み
-            input_file_path = TEST_RESOURCE_DIR / "niigata_webtext_5_newinfo.txt"
-            webpage_text_curr = input_file_path.read_text(encoding="utf-8")
+            input_file_path = TEST_RESOURCE_DIR / "niigata_news_3.htm"
+            webpage_text = input_file_path.read_text(encoding="utf-8")
+            webpage_text = unicodedata.normalize("NFKC", webpage_text)
+            webpage_text_news = instance._get_news_text(webpage_text)
 
             # テスト対象関数実行
-            instance._commit_disaster_list_close(webpage_text_curr)
+            instance._commit_disaster_list_close(webpage_text_news)
 
             # 実行結果取得
             results = session.query(NiigataRawText).all()
@@ -1183,8 +1189,10 @@ class TestNiigataMain:
         with (
             mocker.patch("util_request_wrapper.download_webpage", return_value="dummy"),
             mocker.patch(
-                "niigata_main.FwdNiigata._split_webtext",
-                return_value=("dummy", "dummy"),
+                "niigata_main.FwdNiigata._get_topinfo_text", return_value="dummy"
+            ),
+            mocker.patch(
+                "niigata_main.FwdNiigata._get_news_text", return_value="dummy"
             ),
             mocker.patch(
                 "niigata_main.FwdNiigata._commit_disaster_list_notice",
