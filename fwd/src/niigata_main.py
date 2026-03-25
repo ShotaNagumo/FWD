@@ -203,11 +203,9 @@ class FwdNiigata:
             # 最新出動情報存在しない場合、空文字を返却する
             return list()
         else:
-            news_info_text = news_info.find("p", id="newInfo").text
-            news_info_list = re.split(r"<br>", news_info_text)
-            for text in news_info_list:
-                text = text.strip()
-            return news_info_list
+            news_info_text = news_info.find("p", id="newInfo").get_text(",")
+            news_info_list = re.split(",", news_info_text)
+            return [s.strip() for s in news_info_list]
 
     def _commit_disaster_list_notice(self, webpage_text_topinfo: str, execute_dt=None):
         """案内情報をDBに登録する
@@ -345,9 +343,13 @@ class FwdNiigata:
 
             # 文字列解析
             for text in webpage_text_news:
-                match_str = re.search(
+                match = re.search(
                     r"(\d{2}月\d{2}日\d{2}時\d{2}分頃、.+?出動しています。)", text
                 )
+                if not match:
+                    continue
+                match_str = match.group(1)
+
                 # 登録済みかを確認する
                 registered = bool(
                     session.query(NiigataRawText)
@@ -403,10 +405,10 @@ class FwdNiigata:
 
             for target in target_list:
                 # raw_text が webpage_text_curr に含まれているかを確認する
-                is_closed = False
+                is_closed = True
                 for text in webpage_text_news:
                     if re.search(target.raw_text, text):
-                        is_closed = True
+                        is_closed = False
                         break
 
                 if is_closed:
