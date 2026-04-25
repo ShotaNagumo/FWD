@@ -428,14 +428,14 @@ class FwdNiigata:
                         close_detail_data.address1 = target.detail_info.address1
                         close_detail_data.address2 = target.detail_info.address2
                         close_detail_data.address3 = target.detail_info.address3
-                    close_data.detail_info = close_detail_data
-                    session.add(close_data)
-                    session.commit()
+                        close_data.detail_info = close_detail_data
+                        session.add(close_data)
+                        session.commit()
 
-                    # targetの災害情報状態を更新する
-                    target.open_close_status = OpenCloseStatus.発生
-                    session.add(target)
-                    session.commit()
+                        # targetの災害情報状態を更新する
+                        target.open_close_status = OpenCloseStatus.発生
+                        session.add(target)
+                        session.commit()
 
         except Exception:
             # 解析に失敗した場合はロールバックする
@@ -460,19 +460,18 @@ class FwdNiigata:
 
             # 分析処理を実行する
             for raw_text_data in not_analyzed_list:
-                self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理開始")
-                detail_data = self._analyze_text(raw_text_data)
+                try:
+                    self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理開始")
+                    detail_data = self._analyze_text(raw_text_data)
 
-                # 分析結果をDBに送信しコミットする
-                session.add(detail_data)
-                session.commit()
-                self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理完了")
-
-        except Exception:
-            # 解析に失敗した場合は処理をロールバックする
-            self._logger.error("文字列解析処理失敗")
-            session.rollback()
-            raise
+                    # 分析結果をDBに送信しコミットする
+                    session.add(detail_data)
+                    session.commit()
+                    self._logger.info(f"ID=[{raw_text_data.id}] の文字列解析処理完了")
+                except Exception:
+                    # 解析に失敗した場合は処理をロールバックする
+                    self._logger.error("文字列解析処理失敗")
+                    session.rollback()
         finally:
             session.close()
 
@@ -793,6 +792,9 @@ class FwdNiigata:
             dict[str, str]: 通知文を作成するために使用するデータ
         """
         datetime_format_str = r"%Y/%m/%d %H:%M"
+
+        if detail_data is None:
+            return ""
 
         # 時刻、災害種別
         data = {
