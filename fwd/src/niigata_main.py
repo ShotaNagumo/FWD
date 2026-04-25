@@ -419,12 +419,15 @@ class FwdNiigata:
                     close_data.notify_status = NotifyStatus.SKIPPED
                     close_data.open_close_status = OpenCloseStatus.終了
                     close_detail_data = NiigataDisasterDetail()
-                    close_detail_data.main_category = target.detail_info.main_category
-                    close_detail_data.open_dt = target.detail_info.open_dt
                     close_detail_data.status = DisasterStatus.終了
-                    close_detail_data.address1 = target.detail_info.address1
-                    close_detail_data.address2 = target.detail_info.address2
-                    close_detail_data.address3 = target.detail_info.address3
+                    if target.detail_info is not None:
+                        close_detail_data.main_category = (
+                            target.detail_info.main_category
+                        )
+                        close_detail_data.open_dt = target.detail_info.open_dt
+                        close_detail_data.address1 = target.detail_info.address1
+                        close_detail_data.address2 = target.detail_info.address2
+                        close_detail_data.address3 = target.detail_info.address3
                     close_data.detail_info = close_detail_data
                     session.add(close_data)
                     session.commit()
