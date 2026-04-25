@@ -73,10 +73,12 @@ class FwdNiigata:
 
             # 災害情報テキストを分割
             top_info_text = self._get_topinfo_text(webpage_text)
+            topcontact_text = self._get_topcontact_text(webpage_text)
             news_text = self._get_news_text(webpage_text)
 
             # 案内情報をDBへ登録する
             self._commit_disaster_list_notice(top_info_text)
+            self._commit_disaster_list_notice(topcontact_text)
 
             # 終了情報をDBへ登録する
             self._commit_disaster_list_close(news_text)
@@ -139,10 +141,12 @@ class FwdNiigata:
                 # 災害情報テキストを前処理・分割
                 webpage_text = unicodedata.normalize("NFKC", webpage_text)
                 topinfo_text = self._get_topinfo_text(webpage_text)
+                topcontact_text = self._get_topcontact_text(webpage_text)
                 news_text = self._get_news_text(webpage_text)
 
                 # 案内情報をDBへ登録する
                 self._commit_disaster_list_notice(topinfo_text, retrieve_time)
+                self._commit_disaster_list_notice(topcontact_text, retrieve_time)
 
                 # 終了情報をDBへ登録する
                 self._commit_disaster_list_close(news_text, retrieve_time)
@@ -179,6 +183,26 @@ class FwdNiigata:
 
         # 解析
         top_info = soup.find("div", id="topInformation")
+        if top_info is None:
+            # 案内情報存在しない場合、空文字を返却する
+            return ""
+        else:
+            return top_info.find("h2").text.strip()
+
+    def _get_topcontact_text(self, webpage_text: str) -> str:
+        """TopContact部分のテキストを抜き出す
+
+        Args:
+            webpage_text (str): htmlテキスト
+
+        Returns:
+            str: TopContact部分のテキスト
+        """
+        # 解析情報
+        soup = BeautifulSoup(webpage_text, "html.parser")
+
+        # 解析
+        top_info = soup.find("div", id="topContact")
         if top_info is None:
             # 案内情報存在しない場合、空文字を返却する
             return ""
